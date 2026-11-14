@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ניסוח">
+<meta name="theme-color" content="#F2F0F7">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<title>ניסוח: אימון כתיבה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Karantina:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a training-log feel. Big condensed numerals mark each drill, one working column per drill. */
+:root{
+  --bg:#F2F0F7; --surface:#FFFFFF; --ink:#1D1A33; --muted:#666283; --line:#DBD7E8;
+  --accent:#F04E42; --accent-ink:#FFFFFF; --second:#0B8F8F; --tint:#E7F5F4;
+  --good:#17895B; --good-bg:#E3F5EC; --warn:#A86500; --warn-bg:#FFF1D6; --bad:#C2352B; --bad-bg:#FDE6E3;
+  --display:"Karantina","Arial Narrow",sans-serif;
+  --body:"Assistant","Segoe UI",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#15132A; --surface:#201D3B; --ink:#F1EEFF; --muted:#A5A1C4; --line:#37335C;
+    --accent:#FF7568; --accent-ink:#1B0B09; --second:#45CFCB; --tint:#1B3440;
+    --good:#5BD6A0; --good-bg:#17382E; --warn:#F3BC5A; --warn-bg:#3D3016; --bad:#FF8E84; --bad-bg:#43201F;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#15132A; --surface:#201D3B; --ink:#F1EEFF; --muted:#A5A1C4; --line:#37335C;
+  --accent:#FF7568; --accent-ink:#1B0B09; --second:#45CFCB; --tint:#1B3440;
+  --good:#5BD6A0; --good-bg:#17382E; --warn:#F3BC5A; --warn-bg:#3D3016; --bad:#FF8E84; --bad-bg:#43201F;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.6}
+main{max-width:860px;margin:0 auto;padding:28px 18px 56px;display:flex;flex-direction:column;gap:24px}
+h1,h2,h3{margin:0;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--second);outline-offset:2px}
+
+/* home */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.brand{font-family:var(--display);font-weight:700;font-size:84px;line-height:.8;letter-spacing:.01em}
+.brand span{color:var(--accent)}
+.tagline{color:var(--muted);margin:10px 0 0}
+.today{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.track{height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.track i{display:block;height:100%;border-radius:6px;background:var(--second)}
+.lvl-name{font-family:var(--display);font-size:34px;line-height:.9}
+.coach{display:flex;align-items:flex-end;gap:10px;max-width:400px}
+.av{flex:0 0 52px;width:52px;height:52px;display:block}
+.av svg{display:block;width:100%;height:100%}
+.coach .av{flex-basis:88px;width:88px;height:88px}
+.bubble{background:var(--surface);border:1px solid var(--line);border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:17px;line-height:1.4}
+.bubble b{display:block;color:var(--second);font-size:14px}
+.confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(15,12,35,.72);display:flex;align-items:center;justify-content:center;padding:18px}
+.lvl-card{background:var(--surface);border-radius:20px;padding:26px 30px;max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+.lvl-card .av{flex:none;width:120px;height:120px;animation:hop .6s ease-in-out 3}
+.lvl-card p{margin:0 0 8px}
+.lvl-num{font-family:var(--display);font-weight:700;font-size:76px;line-height:.85;color:var(--accent)}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.today-row{display:flex;justify-content:space-between;gap:16px;font-weight:600}
+.today-row small{color:var(--muted);font-weight:400;font-size:15px}
+.segs{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.segs i{height:8px;border-radius:4px;background:var(--line)}
+.segs i.on{background:var(--accent)}
+.drills{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;list-style:none;margin:0;padding:0}
+.drill{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:start;width:100%;text-align:start;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;transition:transform .12s,border-color .12s}
+.drill:hover{transform:translateY(-2px);border-color:var(--accent)}
+.drill .num{font-family:var(--display);font-size:64px;line-height:.85;color:var(--accent);grid-row:span 3;min-width:34px}
+.drill{position:relative}
+.drill.done{border-color:var(--good);background:var(--good-bg)}
+.drill.done .num{color:var(--good)}
+.tick{position:absolute;right:14px;bottom:12px;width:30px;height:30px;border-radius:50%;background:var(--good);color:var(--surface);display:flex;align-items:center;justify-content:center}
+.tick svg{width:18px;height:18px}
+.drill h3{font-size:21px;line-height:1.25}
+.drill p{margin:0;color:var(--muted);font-size:16px;line-height:1.4}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.pill{font-size:14px;border-radius:99px;padding:1px 10px;background:var(--tint);color:var(--second);font-weight:600}
+.pill.ok{background:var(--good-bg);color:var(--good)}
+.note{color:var(--muted);font-size:15px;border-top:1px solid var(--line);padding-top:14px;margin:0}
+
+/* drill view */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.back{background:none;border:0;padding:6px 0;color:var(--muted);font-weight:600}
+.back:hover{color:var(--ink)}
+.head{display:flex;gap:16px;align-items:flex-end}
+.head .num{font-family:var(--display);font-size:92px;line-height:.78;color:var(--accent)}
+.head h2{font-size:30px;line-height:1.15}
+.head p{margin:4px 0 0;color:var(--muted)}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:18px}
+.label{font-size:15px;font-weight:700;color:var(--second)}
+.prompt{font-size:26px;font-weight:700;line-height:1.35;margin:0}
+.prompt .gap{display:inline-block;min-width:70px;border-bottom:3px solid var(--accent);margin:0 4px}
+.lines{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:22px;font-weight:600}
+textarea,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;resize:vertical}
+textarea:focus,input[type=text]:focus{border-color:var(--second);outline:none}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 16px;font-weight:600}
+.chip[aria-pressed=true]{background:var(--second);border-color:var(--second);color:var(--surface)}
+.btn{border:0;border-radius:10px;padding:10px 22px;font-weight:700;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:none;border:1.5px solid var(--line);color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.stem{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.stem b{font-family:var(--display);font-size:34px;line-height:1;color:var(--accent);min-width:54px}
+.fb{border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.fb .tx{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.parts{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch;margin-top:4px}
+.part{background:var(--surface);border-radius:10px;padding:8px 12px;line-height:1.35}
+.part small{display:block;font-size:14px;font-weight:700;color:var(--second)}
+.link{align-self:center;font-family:var(--display);font-weight:700;font-size:30px;line-height:1;color:var(--accent);white-space:nowrap}
+.sample{border:2px dashed var(--second);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:var(--tint)}
+.sample-head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;font-size:16px;color:var(--muted)}
+.sample-row{display:flex;gap:10px;align-items:baseline}
+.sample-row .n{font-family:var(--display);font-size:30px;line-height:1;color:var(--second);min-width:16px}
+.sample-row small{display:block;font-size:14px;font-weight:700;color:var(--second)}
+.btn.wait:disabled{background:var(--line);color:var(--muted);opacity:1}
+.clock{font-variant-numeric:tabular-nums}
+@media (max-width:480px){.parts{grid-template-columns:1fr}.link{justify-self:center}}
+.fb.good .av{animation:hop .5s ease-in-out 2}
+.fb.good{background:var(--good-bg)} .fb.warn{background:var(--warn-bg)} .fb.bad{background:var(--bad-bg)}
+.fb.good strong{color:var(--good)} .fb.warn strong{color:var(--warn)} .fb.bad strong{color:var(--bad)}
+.fb p{margin:0}
+.example{border-inline-start:4px solid var(--second);padding:4px 14px;background:var(--tint);border-radius:0 8px 8px 0}
+[dir=rtl] .example{border-radius:8px 0 0 8px}
+.example small{display:block;color:var(--second);font-weight:700}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.opt{border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:12px;font-weight:700;font-size:20px}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.right{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.opt.wrong{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.stack{display:flex;flex-direction:column;gap:8px;min-height:52px}
+.sent{text-align:start;border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:baseline}
+.sent:hover:not(:disabled){border-color:var(--accent)}
+.sent .n{font-family:var(--display);font-size:28px;line-height:1;color:var(--accent);min-width:18px}
+.sent .role{margin-inline-start:auto;white-space:nowrap}
+.sent.right{border-color:var(--good)} .sent.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.empty{color:var(--muted);border:1.5px dashed var(--line);border-radius:10px;padding:10px 14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:700}
+.field label small{font-weight:400;color:var(--muted)}
+.result{font-size:20px;line-height:1.7;margin:0}
+.checks{display:flex;flex-direction:column;gap:6px}
+.checks label{display:flex;gap:10px;align-items:baseline}
+.checks input{width:18px;height:18px;accent-color:var(--second)}
+.count{color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums}
+@media (max-width:480px){.brand{font-size:68px}.prompt{font-size:22px}.head .num{font-size:72px}.sheet{padding:16px}}
+@media (prefers-reduced-motion:reduce){.drill{transition:none}.lvl-card,.lvl-card .av,.fb.good .av{animation:none}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+(function(){
+"use strict";
+var app=document.getElementById("app");
+
+var DRILLS=[
+ {id:"expand",title:"משפט מתרחב",desc:"לוקחים משפט של שתי מילים ומוסיפים לו פרטים.",mins:2,tag:"משפט",
+  why:"משפט טוב עונה על שאלות. כל שאלה שעונים עליה מוסיפה לקורא תמונה ברורה יותר."},
+ {id:"because",title:"כי, אבל, לכן",desc:"אותה התחלה, שלושה המשכים שונים.",mins:3,tag:"משפט",
+  why:"שלוש המילים האלה מכריחות לחשוב על סיבה, על צד שני ועל תוצאה. זה הבסיס של כל תשובה מנומקת."},
+ {id:"combine",title:"מחברים משפטים",desc:"שלושה משפטים קצרים הופכים למשפט אחד.",mins:3,tag:"משפט",
+  why:"משפטים קצרים ונפרדים נשמעים קטועים. חיבור שלהם מראה איך הרעיונות קשורים זה לזה."},
+ {id:"connectors",title:"מילת הקישור",desc:"חמש שאלות מהירות. איזו מילה מתאימה?",mins:2,tag:"בדיקה מיידית",
+  why:"מילת קישור אומרת לקורא מה היחס בין שני רעיונות: ניגוד, תוצאה, דוגמה או תוספת."},
+ {id:"order",title:"סדר בפסקה",desc:"ארבעה משפטים מבולגנים. מה בא קודם?",mins:3,tag:"בדיקה מיידית",
+  why:"פסקה טובה בנויה בסדר קבוע: טענה, נימוק, הסבר וסיכום. כשמכירים את הסדר, קל יותר לכתוב אותו."},
+ {id:"paragraph",title:"פסקה משלך",desc:"טענה, נימוק והסבר על נושא שבחרת.",mins:6,tag:"פסקה",
+  why:"במקום דף ריק יש שלושה שלבים קטנים. בסוף מחברים אותם ומקבלים פסקה שלמה."}
+];
+
+var EXPAND=[
+ {base:"היא צחקה.",qs:["מי?","מתי?","איפה?","למה?"],ex:"אתמול בהפסקה נועה צחקה בקול, כי יעל חיקתה את המורה למתמטיקה."},
+ {base:"הם איחרו.",qs:["מי?","לאן?","בכמה זמן?","למה?"],ex:"האחים שלי איחרו בחצי שעה לחתונה של בת הדודה, כי הם יצאו מהבית רק אחרי שהמשחק נגמר."},
+ {base:"הטלפון נפל.",qs:["של מי?","מתי?","מאיפה?","מה קרה אחר כך?"],ex:"הבוקר הטלפון של אחי נפל מהמרפסת בקומה השנייה, והמסך שלו נסדק לגמרי."}
+];
+var BECAUSE=[
+ {stem:"בני נוער מבלים הרבה שעות בטלפון",ex:["כי שם נמצאים החברים, המוזיקה והסרטונים שהם אוהבים.","אבל רובם מצליחים גם ללמוד ולהיפגש פנים אל פנים.","לכן הורים רבים מנסים לקבוע שעות בלי מסכים."]},
+ {stem:"כדאי שבית הספר יתחיל בתשע בבוקר",ex:["כי בני נוער נרדמים מאוחר וצריכים יותר שעות שינה.","אבל אז יום הלימודים יסתיים מאוחר יותר.","לכן כמה בתי ספר כבר בודקים שינוי במערכת השעות."]},
+ {stem:"שיעורי בית הם חלק מהלימודים",ex:["כי תרגול בבית עוזר לזכור את מה שנלמד בכיתה.","אבל כשיש יותר מדי מהם, לא נשאר זמן לחוגים ולמנוחה.","לכן חשוב שהמורים יתאמו ביניהם כמה שיעורים לתת."]}
+];
+var COMBINE=[
+ {parts:["ירד גשם חזק.","המשחק בוטל.","השחקנים התאכזבו."],ex:"המשחק בוטל בגלל הגשם החזק, והשחקנים התאכזבו."},
+ {parts:["מאיה למדה כל הערב.","המבחן היה קשה.","היא קיבלה ציון טוב."],ex:"למרות שהמבחן היה קשה, מאיה קיבלה ציון טוב כי היא למדה כל הערב."},
+ {parts:["הסרט היה ארוך.","הסרט היה מותח.","לא הסתכלתי בטלפון אפילו פעם אחת."],ex:"הסרט היה ארוך אבל כל כך מותח, שלא הסתכלתי בטלפון אפילו פעם אחת."}
+];
+var QUIZ=[
+ {a:"רציתי לצאת לריצה,",b:"התחיל לרדת גשם.",opts:["אבל","לכן","למשל","בנוסף"],right:"אבל",l:["מה רציתי","מה קרה בפועל"],
+  why:"המילה <b>אבל</b> מסמנת <b>ניגוד</b>: מה שקרה הפוך ממה שרציתי."},
+ {a:"לא ישנתי מספיק בלילה,",b:"היה לי קשה להתרכז בשיעור.",opts:["למשל","לכן","אבל","בנוסף"],right:"לכן",l:["סיבה","תוצאה"],
+  why:"המילה <b>לכן</b> מסמנת <b>תוצאה</b>: <b>הקושי להתרכז</b> נגרם מחוסר השינה."},
+ {a:"יש הרבה דרכים לחסוך בחשמל,",b:"לכבות את המזגן כשיוצאים מהחדר.",opts:["לכן","אבל","למשל","למרות זאת"],right:"למשל",l:["רעיון כללי","דוגמה"],
+  why:"המילה <b>למשל</b> מסמנת <b>דוגמה</b>: כיבוי המזגן הוא דרך אחת מתוך רבות."},
+ {a:"היא התאמנה כל יום במשך חודש.",b:", היא לא הצליחה לסיים את הריצה.",opts:["לכן","בנוסף","למשל","למרות זאת"],right:"למרות זאת",l:["המאמץ","התוצאה המפתיעה"],
+  why:"הביטוי <b>למרות זאת</b> מסמן <b>תוצאה לא צפויה</b>: ציפינו שתצליח, וזה לא קרה."},
+ {a:"הספר הזה מצחיק.",b:", יש בו דמויות שקל להזדהות איתן.",opts:["לעומת זאת","בנוסף","לכן","למרות זאת"],right:"בנוסף",l:["סיבה ראשונה","סיבה נוספת"],
+  why:"המילה <b>בנוסף</b> מסמנת <b>תוספת</b>: עוד סיבה לאהוב את הספר."}
+];
+var ROLES=["טענה","נימוק","הסבר","סיכום"];
+var ORDER=[
+ ["לדעתי, כדאי שבכל בית ספר תהיה הפסקה ארוכה באמצע היום.",
+  "אחרי כמה שיעורים ברצף קשה מאוד להתרכז, ורוב התלמידים מפסיקים להקשיב.",
+  "הפסקה ארוכה נותנת זמן לאכול, לזוז ולדבר עם חברים, ואז חוזרים לשיעור עם יותר כוח.",
+  "לכן הפסקה ארוכה לא מבזבזת זמן לימוד, אלא עוזרת לנצל אותו טוב יותר."],
+ ["חיית מחמד מלמדת ילדים אחריות.",
+  "כלב, למשל, צריך לאכול ולצאת לטיול כל יום, גם כשאין חשק.",
+  "כשילד דואג לכלב בעצמו, הוא מתרגל לכך שמישהו סומך עליו.",
+  "כך, דרך הטיפול היומיומי, הילד לומד להיות אחראי גם בתחומים אחרים."]
+];
+var SAMPLES=[
+ ["לדעתי, לא כדאי לאסור טלפונים בבית הספר, אלא לקבוע מתי מותר להשתמש בהם.",
+  "למשל, בשיעור היסטוריה המורה ביקשה מאיתנו לחפש מידע בטלפון, וכך סיימנו את המשימה עוד בזמן השיעור.",
+  "זה מראה שהטלפון עוזר ללמוד כשמשתמשים בו בזמן הנכון, ולכן כללים ברורים עדיפים על איסור מוחלט."],
+ ["לדעתי, עדיף לראות סרט בקולנוע.",
+  "למשל, כשראיתי סרט פעולה בקולנוע, המסך הגדול והסאונד גרמו לי להרגיש שאני בתוך הסרט, ואף אחד לא עצר אותו באמצע.",
+  "זה מראה שבקולנוע מתרכזים רק בסרט, ולכן החוויה חזקה יותר מאשר בבית."],
+ ["לדעתי, תלמידים צריכים לבחור בעצמם לפחות חלק מהמקצועות.",
+  "למשל, חברה שלי בחרה במגמת אמנות, ומאז היא משקיעה בלימודים הרבה יותר מבעבר.",
+  "זה מראה שתלמיד שלומד משהו שמעניין אותו מתאמץ יותר, ולכן הבחירה משפרת את הלמידה."]
+];
+var TOPICS=["האם כדאי לאסור טלפונים בבית הספר?","מה עדיף: לראות סרט בבית או בקולנוע?","האם תלמידים צריכים לבחור בעצמם אילו מקצועות ללמוד?"];
+
+/* storage: a convenience only, the page works without it */
+var KEY="nisuach-demo-v1";
+var store={days:{},item:{},total:0};
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&p.days&&p.item)store=p;}}catch(e){}
+store.total=store.total||0;
+
+/* levels: a level is earned by finishing every drill twice */
+var ROUNDS=2,MAXL=5,LNAMES=["חימום","קצב","זרימה","דיוק","קול משלך"];
+store.counts=store.counts||{};
+function cnt(id){return store.counts[id]||0;}
+function levelInfo(){
+  var c=DRILLS.map(function(d){return cnt(d.id);});
+  var L=Math.min(MAXL,1+Math.floor(Math.min.apply(null,c)/ROUNDS)),max=L===MAXL,need=ROUNDS*DRILLS.length,left=0;
+  c.forEach(function(v){left+=Math.max(0,ROUNDS*L-v);});
+  return{n:L,name:LNAMES[L-1],max:max,left:max?0:left,pct:max?100:Math.round((need-left)/need*100)};
+}
+
+/* Gaya, the coach: an original character drawn inline */
+function avatar(mood){
+  var eyes=mood==="happy"?'<path d="M45 58q5-7 10 0M65 58q5-7 10 0" fill="none" stroke="#1D1A33" stroke-width="3" stroke-linecap="round"/>':
+    '<circle cx="50" cy="56" r="3.2" fill="#1D1A33"/><circle cx="70" cy="56" r="3.2" fill="#1D1A33"/>'+(mood==="think"?'<path d="M64 47l11-3" stroke="#2B2140" stroke-width="3" stroke-linecap="round"/>':'');
+  var mouth=mood==="happy"?'<path d="M51 66q9 12 18 0z" fill="#8A2F3A"/>':
+    mood==="think"?'<path d="M54 70l12-2" stroke="#8A2F3A" stroke-width="3" stroke-linecap="round"/>':
+    '<path d="M53 67q7 6 14 0" fill="none" stroke="#8A2F3A" stroke-width="3" stroke-linecap="round"/>';
+  return '<span class="av"><svg viewBox="0 0 120 120" role="img" aria-label="אודיה">'+
+    '<path d="M28 56Q28 22 60 22Q92 22 92 56L92 90Q92 96 86 96L34 96Q28 96 28 90Z" fill="#2B2140"/>'+
+    '<path d="M14 120Q16 90 60 88Q104 90 106 120Z" fill="var(--second)"/>'+
+    '<rect x="52" y="74" width="16" height="18" fill="#E5B48C"/>'+
+    '<ellipse cx="60" cy="54" rx="24" ry="26" fill="#F2C6A0"/>'+
+    '<path d="M36 52Q38 28 60 27Q82 28 84 52Q74 38 58 40Q44 41 36 52Z" fill="#2B2140"/>'+
+    '<path d="M70 30Q80 34 83 48Q76 38 68 37Z" fill="var(--accent)"/>'+
+    '<path d="M24 56Q24 12 60 12Q96 12 96 56" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>'+
+    '<rect x="17" y="46" width="13" height="24" rx="6" fill="var(--accent)"/><rect x="90" y="46" width="13" height="24" rx="6" fill="var(--accent)"/>'+
+    '<circle cx="43" cy="64" r="4" fill="#F08C8C" opacity=".45"/><circle cx="77" cy="64" r="4" fill="#F08C8C" opacity=".45"/>'+
+    eyes+mouth+'</svg></span>';
+}
+
+/* celebrations */
+var cv=null,run=0;
+function confetti(n){
+  if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  if(!cv){cv=document.createElement("canvas");cv.className="confetti";document.body.appendChild(cv);}
+  var ctx=cv.getContext("2d"),W=cv.width=window.innerWidth,H=cv.height=window.innerHeight;
+  var cols=["#F04E42","#0B8F8F","#F3BC5A","#7C5CFF","#45CFCB","#FF9DB0"],ps=[],i,me=++run,t0=performance.now(),life=2600;
+  for(i=0;i<n;i++)ps.push({x:W/2+(Math.random()-.5)*W*.5,y:H*.4,vx:(Math.random()-.5)*16,vy:-Math.random()*14-4,s:6+Math.random()*7,r:Math.random()*6.28,vr:(Math.random()-.5)*.4,c:cols[i%cols.length]});
+  function frame(t){
+    if(me!==run)return;
+    var el=t-t0;ctx.clearRect(0,0,W,H);
+    if(el>=life)return;
+    ctx.globalAlpha=Math.max(0,1-el/life);
+    ps.forEach(function(p){p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore();});
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function levelUp(li){
+  var o=document.createElement("div");o.className="overlay";
+  o.innerHTML='<div class="lvl-card" role="dialog" aria-modal="true" aria-label="עלית רמה">'+avatar("happy")+
+    '<div class="label">עלית רמה</div><div class="lvl-num">רמה '+li.n+'</div><p>הגעת לשלב "'+li.name+'". '+
+    (li.max?"זו הרמה הגבוהה ביותר כרגע.":"עוד "+li.left+" תרגילים לרמה הבאה.")+'</p><button class="btn" type="button">ממשיכה</button></div>';
+  document.body.appendChild(o);
+  var b=o.querySelector("button");b.onclick=function(){o.remove();};b.focus();
+  confetti(240);
+}
+var credited=false;
+function credit(id,win){
+  var up=null;
+  if(!credited){credited=true;var before=levelInfo().n;store.total++;store.counts[id]=cnt(id)+1;markDone(id);var after=levelInfo();if(after.n>before)up=after;}
+  if(up)levelUp(up);else if(win)confetti(90);
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+function dayKey(d){return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
+function doneToday(){return store.days[dayKey(new Date())]||[];}
+function markDone(id){var k=dayKey(new Date());var a=store.days[k]||[];if(a.indexOf(id)<0)a.push(id);store.days[k]=a;save();}
+function streak(){var d=new Date(),n=0;if(!(store.days[dayKey(d)]||[]).length)d.setDate(d.getDate()-1);
+  while((store.days[dayKey(d)]||[]).length){n++;d.setDate(d.getDate()-1);}return n;}
+function itemOf(id,list){var i=store.item[id]||0;return list[i%list.length];}
+function nextItem(id){store.item[id]=(store.item[id]||0)+1;save();}
+
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function words(s){return s.trim().split(/\s+/).filter(Boolean);}
+function $(sel){return app.querySelector(sel);}
+function $$(sel){return Array.prototype.slice.call(app.querySelectorAll(sel));}
+function fb(kind,title,text){return '<div class="fb '+kind+'">'+avatar(kind==="good"?"happy":"think")+'<div class="tx"><strong>'+esc(title)+'</strong>'+(text?'<p>'+esc(text)+'</p>':'')+'</div></div>';}
+function fbRaw(kind,title,html){return '<div class="fb '+kind+'">'+avatar(kind==="good"?"happy":"think")+'<div class="tx"><strong>'+esc(title)+'</strong>'+html+'</div></div>';}
+function example(text,label){return '<div class="example"><small>'+esc(label||"דוגמה אחת מתוך הרבה אפשריות")+'</small>'+esc(text)+'</div>';}
+function endButtons(){return '<div class="row"><button class="btn" id="again" type="button">עוד אחד</button><button class="btn ghost" id="home" type="button">חזרה לרשימה</button></div>';}
+function wireEnd(id){$("#again").onclick=function(){nextItem(id);render();};$("#home").onclick=function(){go("home");};}
+
+function home(){
+  var done=doneToday(),s=streak(),li=levelInfo();
+  var segs=DRILLS.map(function(d){return '<i class="'+(done.indexOf(d.id)>=0?"on":"")+'"></i>';}).join("");
+  var list=DRILLS.map(function(d,i){var ok=done.indexOf(d.id)>=0,lv=Math.min(ROUNDS,Math.max(0,cnt(d.id)-ROUNDS*(li.n-1)));
+    return '<li><button class="drill'+(ok?" done":"")+'" type="button" data-go="'+d.id+'"><span class="num">'+(i+1)+'</span><h3>'+d.title+'</h3><p>'+d.desc+'</p>'+
+    '<span class="meta"><span class="pill">'+d.tag+'</span><span class="pill">'+d.mins+' דקות</span>'+(li.max?'':'<span class="pill'+(lv>=ROUNDS?' ok':'')+'">'+lv+' מתוך '+ROUNDS+' לרמה</span>')+'</span>'+
+    (ok?'<span class="tick" role="img" aria-label="בוצע היום"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>':'')+'</button></li>';}).join("");
+  var say=!store.total?"היי, אני אודיה. בחרי תרגיל אחד ונתחיל. זה לוקח שתי דקות.":
+    done.length>=DRILLS.length?"סיימת את כל התרגילים של היום. כל הכבוד, נתראה מחר.":
+    !done.length?"טוב שחזרת. מתחילות בתרגיל אחד קצר?":
+    li.max?"את ברמה הגבוהה ביותר. ממשיכות לשמור על הכושר.":
+    li.left===1?"עוד תרגיל אחד ואת עולה רמה.":"עוד "+li.left+" תרגילים ואת ברמה "+(li.n+1)+".";
+  var leftTxt=li.max?"הגעת לרמה הגבוהה ביותר בהדגמה":(li.left===1?"עוד תרגיל אחד לרמה "+(li.n+1):"עוד "+li.left+" תרגילים לרמה "+(li.n+1))+" · כל תרגיל פעמיים";
+  app.innerHTML='<header class="top"><div><div class="brand">ניסוח<span>.</span></div><p class="tagline">עשר דקות ביום. משפט אחד בכל פעם.</p></div>'+
+    '<div class="coach">'+avatar(done.length?"happy":"neutral")+'<div class="bubble"><b>אודיה</b>'+say+'</div></div></header>'+
+    '<div class="stats"><div class="today"><div class="today-row"><span class="lvl-name">רמה '+li.n+' · '+li.name+'</span><small>'+store.total+' תרגילים עד היום</small></div>'+
+    '<div class="track"><i style="width:'+li.pct+'%"></i></div><div class="today-row"><span>'+leftTxt+'</span></div></div>'+
+    '<div class="today"><div class="today-row"><span>היום</span><span>'+done.length+' מתוך '+DRILLS.length+'</span></div><div class="segs">'+segs+'</div>'+
+    '<div class="today-row"><small>רצף ימים</small><small>'+s+'</small></div></div></div>'+
+    '<ul class="drills">'+list+'</ul>'+
+    '<p class="note">גרסת הדגמה. התרגילים קבועים ואין כאן בינה מלאכותית, ולכן בתרגילי הכתיבה אין ציון: משווים לדוגמה ובודקים לבד. ההתקדמות נשמרת רק בדפדפן הזה.</p>';
+  $$("[data-go]").forEach(function(b){b.onclick=function(){go(b.getAttribute("data-go"));};});
+}
+
+function shell(d,inner){
+  var n=DRILLS.indexOf(d)+1;
+  app.innerHTML='<div class="bar"><button class="back" type="button" id="back">→ חזרה לרשימה</button><span class="pill">'+d.mins+' דקות</span></div>'+
+    '<div class="head"><span class="num">'+n+'</span><div><h2>'+d.title+'</h2><p>'+d.why+'</p></div></div>'+
+    '<section class="sheet">'+inner+'<div id="out" class="sheet" style="border:0;padding:0" aria-live="polite"></div></section>';
+  $("#back").onclick=function(){go("home");};
+}
+
+function expand(d){
+  var it=itemOf(d.id,EXPAND);
+  shell(d,'<div><div class="label">המשפט הקצר</div><p class="prompt">'+esc(it.base)+'</p></div>'+
+    '<div class="field"><label for="ans">כתבי אותו מחדש עם יותר פרטים</label><textarea id="ans" rows="3" placeholder="'+esc(it.base.replace(".",""))+'..."></textarea></div>'+
+    '<div><div class="label">סמני כל שאלה שהמשפט שלך עונה עליה</div><div class="row" style="margin-top:8px">'+
+    it.qs.map(function(q){return '<button class="chip" type="button" aria-pressed="false">'+esc(q)+'</button>';}).join("")+'</div></div>'+
+    '<div class="row"><button class="btn" id="check" type="button">בדקי</button></div>');
+  $$(".chip").forEach(function(c){c.onclick=function(){c.setAttribute("aria-pressed",c.getAttribute("aria-pressed")==="true"?"false":"true");};});
+  $("#check").onclick=function(){
+    var n=words($("#ans").value).length,base=words(it.base).length,q=$$('.chip[aria-pressed="true"]').length,h;
+    if(!n){$("#out").innerHTML=fb("warn","עוד לא כתבת משפט","כתבי משפט בתיבה ואז לחצי שוב.");return;}
+    if(n<base+4)h=fb("warn","המשפט עדיין קצר","יש בו "+n+" מילים. נסי לענות על עוד שאלה אחת מהרשימה.");
+    else if(q<2)h=fb("warn","המשפט גדל מ־"+base+" ל־"+n+" מילים","סימנת פחות משתי שאלות. בדקי אם אפשר להוסיף עוד פרט.");
+    else h=fb("good","המשפט גדל מ־"+base+" ל־"+n+" מילים","ענית על "+q+" שאלות. קראי אותו בקול ובדקי שהוא נשמע טבעי.");
+    $("#out").innerHTML=h+example(it.ex)+endButtons();wireEnd(d.id);credit(d.id,h.indexOf('fb good')>=0);
+  };
+}
+
+function because(d){
+  var it=itemOf(d.id,BECAUSE),keys=["כי","אבל","לכן"];
+  shell(d,'<div><div class="label">ההתחלה</div><p class="prompt">'+esc(it.stem)+'...</p></div>'+
+    keys.map(function(k,i){return '<div class="stem"><b>'+k+'</b><input type="text" id="s'+i+'" aria-label="המשך אחרי '+k+'" placeholder="המשיכי את המשפט"></div>';}).join("")+
+    '<div class="row"><button class="btn" id="check" type="button">בדקי</button></div>');
+  $("#check").onclick=function(){
+    var short=[],empty=0;
+    keys.forEach(function(k,i){var n=words($("#s"+i).value).length;if(!n)empty++;else if(n<3)short.push(k);});
+    if(empty===3){$("#out").innerHTML=fb("warn","עוד לא כתבת המשך","השלימי לפחות אחד מהמשפטים.");return;}
+    var h;
+    if(empty)h=fb("warn","נשארו "+empty+" המשכים ריקים","אפשר לחזור ולהשלים, או להשוות לדוגמאות.");
+    else if(short.length)h=fb("warn","ההמשך אחרי \""+short.join("\" ואחרי \"")+"\" קצר מאוד","נסי להוסיף עוד כמה מילים שמסבירות למה התכוונת.");
+    else h=fb("good","שלושה המשכים מלאים","בדקי: \"כי\" נותן סיבה, \"אבל\" מציג צד שני, \"לכן\" מציג תוצאה.");
+    credit(d.id,h.indexOf('fb good')>=0);
+    $("#out").innerHTML=h+example(it.stem+" "+it.ex[0]+" "+it.stem+" "+it.ex[1]+" "+it.stem+" "+it.ex[2],"דוגמאות להמשך")+endButtons();wireEnd(d.id);
+  };
+}
+
+function combine(d){
+  var it=itemOf(d.id,COMBINE);
+  var CONN=["כי","אבל","לכן","ולכן","בגלל","למרות","כאשר","מפני","משום","כיוון","מכיוון","אך","אז","כדי","אחרי","לפני","עד"];
+  shell(d,'<div><div class="label">שלושה משפטים קצרים</div><ul class="lines">'+it.parts.map(function(p){return "<li>"+esc(p)+"</li>";}).join("")+'</ul></div>'+
+    '<div class="field"><label for="ans">חברי אותם למשפט אחד <small>אפשר לשנות מילים ולהחליף סדר</small></label><textarea id="ans" rows="3"></textarea></div>'+
+    '<div class="row"><button class="btn" id="check" type="button">בדקי</button></div>');
+  $("#check").onclick=function(){
+    var t=$("#ans").value.trim();
+    if(!t){$("#out").innerHTML=fb("warn","עוד לא כתבת משפט","כתבי משפט בתיבה ואז לחצי שוב.");return;}
+    var ends=(t.replace(/[.!?]+\s*$/,"").match(/[.!?]/g)||[]).length;
+    var toks=words(t.replace(/[.,!?;:"']/g," "));
+    var has=toks.some(function(w){return CONN.indexOf(w)>=0||/^כש./.test(w)||/^(ש|וש)(ה|ל|ב)/.test(w);});
+    var h;
+    if(ends>0)h=fb("warn","נראה שיש כאן יותר ממשפט אחד","יש נקודה באמצע. נסי להחליף אותה במילת קישור כמו כי, אבל או למרות.");
+    else if(!has)h=fb("warn","לא מצאתי מילת קישור מוכרת","אולי השתמשת במילה שאני לא מכירה. השווי לדוגמה ובדקי שהקשר בין הרעיונות ברור.");
+    else h=fb("good","משפט אחד עם מילת קישור","בדקי שכל שלושת הרעיונות נמצאים בו.");
+    $("#out").innerHTML=h+example(it.ex)+endButtons();wireEnd(d.id);credit(d.id,h.indexOf('fb good')>=0);
+  };
+}
+
+function connectors(d){
+  var i=0,score=0;
+  function q(){
+    var it=QUIZ[i];
+    shell(d,'<div class="row" style="justify-content:space-between"><span class="label">שאלה '+(i+1)+' מתוך '+QUIZ.length+'</span><span class="count">נכונות: '+score+'</span></div>'+
+      '<p class="prompt">'+esc(it.a)+' <span class="gap">&nbsp;</span>'+(it.b.charAt(0)===","?"":" ")+esc(it.b)+'</p>'+
+      '<div class="opts">'+it.opts.map(function(o){return '<button class="opt" type="button">'+esc(o)+'</button>';}).join("")+'</div>');
+    $$(".opt").forEach(function(b){b.onclick=function(){
+      var ok=b.textContent===it.right;if(ok)score++;
+      $$(".opt").forEach(function(x){x.disabled=true;if(x.textContent===it.right)x.classList.add("right");});
+      if(!ok)b.classList.add("wrong");
+      var last=i===QUIZ.length-1;
+      var clean=function(t){return t.replace(/^[,\s]+|[.,\s]+$/g,"");};
+      var detail='<p>'+it.why+'</p><div class="parts"><div class="part"><small>'+esc(it.l[0])+'</small><b>'+esc(clean(it.a))+'</b></div>'+
+        '<div class="link">'+esc(it.right)+'</div><div class="part"><small>'+esc(it.l[1])+'</small><b>'+esc(clean(it.b))+'</b></div></div>';
+      var nextLabel=last?"לסיכום":"לשאלה הבאה",left=5;
+      $("#out").innerHTML=fbRaw(ok?"good":"bad",ok?"נכון":"התשובה היא \""+it.right+"\"",detail)+
+        '<div class="row"><button class="btn wait" id="next" type="button" disabled>קראי את ההסבר · <span class="clock">0:05</span></button></div>';
+      var nb=$("#next");
+      nb.onclick=function(){if(last)end();else{i++;q();}};
+      var tick=setInterval(function(){
+        if(!document.body.contains(nb)){clearInterval(tick);return;}
+        left--;
+        if(left>0){nb.querySelector(".clock").textContent="0:0"+left;}
+        else{clearInterval(tick);nb.disabled=false;nb.classList.remove("wait");nb.textContent=nextLabel;nb.focus();}
+      },1000);
+    };});
+  }
+  function end(){
+    credit(d.id,score>=4);
+    shell(d,fb(score>=4?"good":"warn",score+" מתוך "+QUIZ.length+" נכונות",score>=4?"את מזהה היטב את היחס בין הרעיונות.":"כדאי לחזור על זה מחר. שימי לב אם החלק השני מנוגד, מוסיף, מדגים או נובע מהראשון.")+
+      '<div class="row"><button class="btn" id="again" type="button">סיבוב נוסף</button><button class="btn ghost" id="home" type="button">חזרה לרשימה</button></div>');
+    $("#again").onclick=function(){i=0;score=0;credited=false;q();};$("#home").onclick=function(){go("home");};
+  }
+  q();
+}
+
+function order(d){
+  var correct=itemOf(d.id,ORDER);
+  var pool=correct.map(function(_,i){return i;});
+  do{pool.sort(function(){return Math.random()-.5;});}while(pool.every(function(v,i){return v===i;}));
+  var built=[],checked=false;
+  function draw(){
+    var left=pool.filter(function(i){return built.indexOf(i)<0;});
+    var ok=checked&&built.every(function(v,i){return v===i;});
+    shell(d,'<div><div class="label">משפטים מבולגנים: לחצי עליהם לפי הסדר הנכון</div><div class="stack" style="margin-top:8px">'+
+      (left.length?left.map(function(i){return '<button class="sent" type="button" data-add="'+i+'">'+esc(correct[i])+'</button>';}).join(""):'<div class="empty">כל המשפטים בפסקה.</div>')+'</div></div>'+
+      '<div><div class="label">הפסקה שלך: לחיצה על משפט מחזירה אותו למעלה</div><div class="stack" style="margin-top:8px">'+
+      (built.length?built.map(function(i,pos){var cls=checked?(i===pos?" right":" wrong"):"";
+        return '<button class="sent'+cls+'" type="button" data-rm="'+i+'"'+(ok?" disabled":"")+'><span class="n">'+(pos+1)+'</span><span>'+esc(correct[i])+'</span>'+(ok?'<span class="pill ok role">'+ROLES[pos]+'</span>':'')+'</button>';}).join(""):'<div class="empty">עדיין ריק. מה המשפט שפותח את הפסקה?</div>')+'</div></div>'+
+      (ok?"":'<div class="row"><button class="btn" id="check" type="button"'+(built.length<correct.length?" disabled":"")+'>בדקי</button></div>'));
+    $$("[data-add]").forEach(function(b){b.onclick=function(){built.push(+b.getAttribute("data-add"));checked=false;draw();};});
+    $$("[data-rm]").forEach(function(b){b.onclick=function(){built.splice(built.indexOf(+b.getAttribute("data-rm")),1);checked=false;draw();};});
+    if(ok){credit(d.id,true);$("#out").innerHTML=fb("good","הסדר נכון","שימי לב לתפקיד של כל משפט: טענה, נימוק, הסבר וסיכום. זה השלד של כמעט כל תשובה מנומקת.")+endButtons();wireEnd(d.id);}
+    else if(checked){$("#out").innerHTML=fb("bad","עוד לא","המשפטים המסומנים באדום לא במקום. רמז: הטענה פותחת, והמשפט שמתחיל במילת סיכום סוגר.");}
+    var c=$("#check");if(c)c.onclick=function(){checked=true;draw();};
+  }
+  draw();
+}
+
+function paragraph(d){
+  var topic=0,canHint=levelInfo().n<3;
+  shell(d,'<div><div class="label">בחרי שאלה</div><div class="row" style="margin-top:8px">'+
+    TOPICS.map(function(t,i){return '<button class="chip" type="button" data-t="'+i+'" aria-pressed="'+(i===0)+'">'+esc(t)+'</button>';}).join("")+'</div></div>'+
+    '<div class="field"><label for="p0">1. הטענה שלי <small>מה דעתך? משפט אחד ברור</small></label><textarea id="p0" rows="2" placeholder="לדעתי..."></textarea></div>'+
+    '<div class="field"><label for="p1">2. נימוק או דוגמה <small>מה מראה שזה נכון?</small></label><textarea id="p1" rows="2" placeholder="למשל..."></textarea></div>'+
+    '<div class="field"><label for="p2">3. הסבר <small>איך הנימוק מחזק את הטענה?</small></label><textarea id="p2" rows="2" placeholder="זה מראה ש..."></textarea></div>'+
+    '<div class="row"><button class="btn" id="check" type="button">חברי לפסקה</button>'+
+    (canHint?'<button class="btn ghost" id="hint" type="button" aria-expanded="false">הראי לי דוגמה</button>':'<span class="count">מרמה 3 כותבים בלי דוגמה.</span>')+'</div>'+
+    '<div id="sample"></div>');
+  var open=false;
+  function drawSample(){
+    var box=$("#sample"),hb=$("#hint");
+    if(!hb)return;
+    hb.textContent=open?"הסתירי את הדוגמה":"הראי לי דוגמה";hb.setAttribute("aria-expanded",open?"true":"false");
+    if(!open){box.innerHTML="";return;}
+    var names=["טענה","נימוק או דוגמה","הסבר"];
+    box.innerHTML='<div class="sample"><div class="sample-head"><span class="pill">דוגמה בלבד</span><span>כך נראים שלושת השלבים כשהם מתחברים. הדעה והנימוקים שלך יהיו אחרים.</span></div>'+
+      '<div class="label">'+esc(TOPICS[topic])+'</div>'+
+      SAMPLES[topic].map(function(t,i){return '<div class="sample-row"><span class="n">'+(i+1)+'</span><div><small>'+names[i]+'</small>'+esc(t)+'</div></div>';}).join("")+'</div>';
+  }
+  if(canHint)$("#hint").onclick=function(){open=!open;drawSample();};
+  $$("[data-t]").forEach(function(b){b.onclick=function(){topic=+b.getAttribute("data-t");$$("[data-t]").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});drawSample();};});
+  $("#check").onclick=function(){
+    var parts=[0,1,2].map(function(i){return $("#p"+i).value.trim();});
+    var missing=parts.filter(function(p){return !p;}).length;
+    if(missing){$("#out").innerHTML=fb("warn","חסרים "+missing+" שלבים","מלאי את שלושת השלבים. משפט אחד בכל שלב מספיק.");return;}
+    var text=parts.map(function(p){return /[.!?]$/.test(p)?p:p+".";}).join(" ");
+    var n=words(text).length;
+    credit(d.id,n>=30);
+    $("#out").innerHTML=fb(n>=30?"good":"warn","כתבת פסקה של "+n+" מילים",n>=30?"קראי אותה בקול פעם אחת ובדקי את שלוש השאלות למטה.":"היא קצרה יחסית. נסי להוסיף פרט אחד לנימוק או להסבר.")+
+      '<div><div class="label">'+esc(TOPICS[topic])+'</div><p class="result" id="res"></p></div>'+
+      '<div class="checks"><div class="label">בדיקה עצמית</div>'+
+      '<label><input type="checkbox" id="c0"><span>מי שקורא רק את המשפט הראשון מבין מה דעתי.</span></label>'+
+      '<label><input type="checkbox" id="c1"><span>הנימוק שלי מוחשי: יש בו דוגמה, מספר או מקרה.</span></label>'+
+      '<label><input type="checkbox" id="c2"><span>ההסבר מחבר בין הנימוק לטענה ולא חוזר עליה.</span></label></div>'+
+      '<div class="row"><button class="btn ghost" id="copy" type="button">העתיקי את הפסקה</button><button class="btn ghost" id="home" type="button">חזרה לרשימה</button></div>';
+    $("#res").textContent=text;
+    $("#home").onclick=function(){go("home");};
+    $("#copy").onclick=function(){var b=this;
+      try{navigator.clipboard.writeText(text).then(function(){b.textContent="הועתק";},function(){b.textContent="ההעתקה נחסמה, סמני את הטקסט ידנית";});}
+      catch(e){b.textContent="ההעתקה נחסמה, סמני את הטקסט ידנית";}};
+  };
+}
+
+var VIEWS={expand:expand,because:because,combine:combine,connectors:connectors,order:order,paragraph:paragraph};
+var current=location.hash.replace("#","")||"home";
+function render(){
+  credited=false;
+  var d=DRILLS.filter(function(x){return x.id===current;})[0];
+  if(d)VIEWS[current](d);else home();
+  try{window.scrollTo(0,0);}catch(e){}
+}
+/* navigation works on its own; the address hash is only kept in step where the viewer allows it */
+function go(id){
+  current=id;render();
+  try{if(location.hash.replace("#","")!==id)location.hash=id;}catch(e){}
+}
+window.addEventListener("hashchange",function(){
+  var h=location.hash.replace("#","")||"home";
+  if(h!==current){current=h;render();}
+});
+render();
+})();
+</script>
+</body>
+</html>
