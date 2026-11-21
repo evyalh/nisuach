@@ -156,99 +156,97 @@ textarea:focus,input[type=text]:focus{border-color:var(--second);outline:none}
 .count{color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums}
 @media (max-width:480px){.brand{font-size:68px}.prompt{font-size:22px}.head .num{font-size:72px}.sheet{padding:16px}}
 @media (prefers-reduced-motion:reduce){.drill{transition:none}.lvl-card,.lvl-card .av,.fb.good .av{animation:none}}
+.who{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin:10px 0 0;color:var(--muted);font-size:16px}
+.who span{font-weight:700;color:var(--ink)}
+.linkbtn{background:none;border:0;padding:0;color:var(--second);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.lvl-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.lvl-opt{text-align:start;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.lvl-opt:hover{border-color:var(--accent)}
+.lvl-opt b{font-family:var(--display);font-size:40px;line-height:.85;color:var(--accent)}
+.lvl-opt span{color:var(--muted);font-size:16px;line-height:1.4}
+.lvl-opt[aria-pressed=true]{border-color:var(--second);background:var(--tint)}
+.users{display:flex;flex-wrap:wrap;gap:10px}
+.err{color:var(--bad);font-weight:600;margin:0;min-height:1em}
+.id{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.03em;direction:ltr}
 </style>
 </head>
 <body>
 <main id="app"></main>
+<script src="exercises.js"></script>
 <script>
 (function(){
 "use strict";
 var app=document.getElementById("app");
+var BANK=window.NISUACH_BANK;
 
 var DRILLS=[
- {id:"expand",title:"משפט מתרחב",desc:"לוקחים משפט של שתי מילים ומוסיפים לו פרטים.",mins:2,tag:"משפט",
+ {id:"expand",title:"משפט מתרחב",desc:"לוקחים משפט קצר ומוסיפים לו פרטים.",mins:2,
   why:"משפט טוב עונה על שאלות. כל שאלה שעונים עליה מוסיפה לקורא תמונה ברורה יותר."},
- {id:"because",title:"כי, אבל, לכן",desc:"אותה התחלה, שלושה המשכים שונים.",mins:3,tag:"משפט",
+ {id:"because",title:"כי, אבל, לכן",desc:"אותה התחלה, שלושה המשכים שונים.",mins:3,
   why:"שלוש המילים האלה מכריחות לחשוב על סיבה, על צד שני ועל תוצאה. זה הבסיס של כל תשובה מנומקת."},
- {id:"combine",title:"מחברים משפטים",desc:"שלושה משפטים קצרים הופכים למשפט אחד.",mins:3,tag:"משפט",
+ {id:"combine",title:"מחברים משפטים",desc:"כמה משפטים קצרים הופכים למשפט אחד.",mins:3,
   why:"משפטים קצרים ונפרדים נשמעים קטועים. חיבור שלהם מראה איך הרעיונות קשורים זה לזה."},
- {id:"connectors",title:"מילת הקישור",desc:"חמש שאלות מהירות. איזו מילה מתאימה?",mins:2,tag:"בדיקה מיידית",
-  why:"מילת קישור אומרת לקורא מה היחס בין שני רעיונות: ניגוד, תוצאה, דוגמה או תוספת."},
- {id:"order",title:"סדר בפסקה",desc:"ארבעה משפטים מבולגנים. מה בא קודם?",mins:3,tag:"בדיקה מיידית",
-  why:"פסקה טובה בנויה בסדר קבוע: טענה, נימוק, הסבר וסיכום. כשמכירים את הסדר, קל יותר לכתוב אותו."},
- {id:"paragraph",title:"פסקה משלך",desc:"טענה, נימוק והסבר על נושא שבחרת.",mins:6,tag:"פסקה",
-  why:"במקום דף ריק יש שלושה שלבים קטנים. בסוף מחברים אותם ומקבלים פסקה שלמה."}
+ {id:"connectors",title:"מילת הקישור",desc:"עד חמש שאלות מהירות. איזו מילה מתאימה?",mins:2,
+  why:"מילת קישור אומרת לקורא מה היחס בין שני רעיונות: ניגוד, תוצאה, דוגמה, הסבר או תוספת."},
+ {id:"order",title:"סדר בפסקה",desc:"משפטים מבולגנים. מה בא קודם?",mins:3,
+  why:"פסקה טובה בנויה בסדר קבוע. כשמכירים את הסדר, קל יותר לכתוב אותו."},
+ {id:"paragraph",title:"פסקה משלך",desc:"בונים פסקה שלב אחר שלב, על נושא לבחירה.",mins:6,
+  why:"במקום דף ריק יש כמה שלבים קטנים. בסוף מחברים אותם ומקבלים פסקה שלמה."}
 ];
+var LEVELS=[null,
+ {name:"יסודות",desc:"משפטים קצרים, מילות קישור בסיסיות ופסקה בשלושה שלבים."},
+ {name:"בנייה",desc:"דעה ונימוק, ניגוד והשוואה, ופסקה עם דוגמה וצד שני."},
+ {name:"שליטה",desc:"לשון רשמית, משפטים מורכבים ופסקה עם טענת נגד."}];
+var MAXL=3,ROUNDS=2,LOCK=3;
 
-var EXPAND=[
- {base:"היא צחקה.",qs:["מי?","מתי?","איפה?","למה?"],ex:"אתמול בהפסקה נועה צחקה בקול, כי יעל חיקתה את המורה למתמטיקה."},
- {base:"הם איחרו.",qs:["מי?","לאן?","בכמה זמן?","למה?"],ex:"האחים שלי איחרו בחצי שעה לחתונה של בת הדודה, כי הם יצאו מהבית רק אחרי שהמשחק נגמר."},
- {base:"הטלפון נפל.",qs:["של מי?","מתי?","מאיפה?","מה קרה אחר כך?"],ex:"הבוקר הטלפון של אחי נפל מהמרפסת בקומה השנייה, והמסך שלו נסדק לגמרי."}
-];
-var BECAUSE=[
- {stem:"בני נוער מבלים הרבה שעות בטלפון",ex:["כי שם נמצאים החברים, המוזיקה והסרטונים שהם אוהבים.","אבל רובם מצליחים גם ללמוד ולהיפגש פנים אל פנים.","לכן הורים רבים מנסים לקבוע שעות בלי מסכים."]},
- {stem:"כדאי שבית הספר יתחיל בתשע בבוקר",ex:["כי בני נוער נרדמים מאוחר וצריכים יותר שעות שינה.","אבל אז יום הלימודים יסתיים מאוחר יותר.","לכן כמה בתי ספר כבר בודקים שינוי במערכת השעות."]},
- {stem:"שיעורי בית הם חלק מהלימודים",ex:["כי תרגול בבית עוזר לזכור את מה שנלמד בכיתה.","אבל כשיש יותר מדי מהם, לא נשאר זמן לחוגים ולמנוחה.","לכן חשוב שהמורים יתאמו ביניהם כמה שיעורים לתת."]}
-];
-var COMBINE=[
- {parts:["ירד גשם חזק.","המשחק בוטל.","השחקנים התאכזבו."],ex:"המשחק בוטל בגלל הגשם החזק, והשחקנים התאכזבו."},
- {parts:["מאיה למדה כל הערב.","המבחן היה קשה.","היא קיבלה ציון טוב."],ex:"למרות שהמבחן היה קשה, מאיה קיבלה ציון טוב כי היא למדה כל הערב."},
- {parts:["הסרט היה ארוך.","הסרט היה מותח.","לא הסתכלתי בטלפון אפילו פעם אחת."],ex:"הסרט היה ארוך אבל כל כך מותח, שלא הסתכלתי בטלפון אפילו פעם אחת."}
-];
-var QUIZ=[
- {a:"רציתי לצאת לריצה,",b:"התחיל לרדת גשם.",opts:["אבל","לכן","למשל","בנוסף"],right:"אבל",l:["מה רציתי","מה קרה בפועל"],
-  why:"המילה <b>אבל</b> מסמנת <b>ניגוד</b>: מה שקרה הפוך ממה שרציתי."},
- {a:"לא ישנתי מספיק בלילה,",b:"היה לי קשה להתרכז בשיעור.",opts:["למשל","לכן","אבל","בנוסף"],right:"לכן",l:["סיבה","תוצאה"],
-  why:"המילה <b>לכן</b> מסמנת <b>תוצאה</b>: <b>הקושי להתרכז</b> נגרם מחוסר השינה."},
- {a:"יש הרבה דרכים לחסוך בחשמל,",b:"לכבות את המזגן כשיוצאים מהחדר.",opts:["לכן","אבל","למשל","למרות זאת"],right:"למשל",l:["רעיון כללי","דוגמה"],
-  why:"המילה <b>למשל</b> מסמנת <b>דוגמה</b>: כיבוי המזגן הוא דרך אחת מתוך רבות."},
- {a:"היא התאמנה כל יום במשך חודש.",b:", היא לא הצליחה לסיים את הריצה.",opts:["לכן","בנוסף","למשל","למרות זאת"],right:"למרות זאת",l:["המאמץ","התוצאה המפתיעה"],
-  why:"הביטוי <b>למרות זאת</b> מסמן <b>תוצאה לא צפויה</b>: ציפינו שתצליח, וזה לא קרה."},
- {a:"הספר הזה מצחיק.",b:", יש בו דמויות שקל להזדהות איתן.",opts:["לעומת זאת","בנוסף","לכן","למרות זאת"],right:"בנוסף",l:["סיבה ראשונה","סיבה נוספת"],
-  why:"המילה <b>בנוסף</b> מסמנת <b>תוספת</b>: עוד סיבה לאהוב את הספר."}
-];
-var ROLES=["טענה","נימוק","הסבר","סיכום"];
-var ORDER=[
- ["לדעתי, כדאי שבכל בית ספר תהיה הפסקה ארוכה באמצע היום.",
-  "אחרי כמה שיעורים ברצף קשה מאוד להתרכז, ורוב התלמידים מפסיקים להקשיב.",
-  "הפסקה ארוכה נותנת זמן לאכול, לזוז ולדבר עם חברים, ואז חוזרים לשיעור עם יותר כוח.",
-  "לכן הפסקה ארוכה לא מבזבזת זמן לימוד, אלא עוזרת לנצל אותו טוב יותר."],
- ["חיית מחמד מלמדת ילדים אחריות.",
-  "כלב, למשל, צריך לאכול ולצאת לטיול כל יום, גם כשאין חשק.",
-  "כשילד דואג לכלב בעצמו, הוא מתרגל לכך שמישהו סומך עליו.",
-  "כך, דרך הטיפול היומיומי, הילד לומד להיות אחראי גם בתחומים אחרים."]
-];
-var SAMPLES=[
- ["לדעתי, לא כדאי לאסור טלפונים בבית הספר, אלא לקבוע מתי מותר להשתמש בהם.",
-  "למשל, בשיעור היסטוריה המורה ביקשה מאיתנו לחפש מידע בטלפון, וכך סיימנו את המשימה עוד בזמן השיעור.",
-  "זה מראה שהטלפון עוזר ללמוד כשמשתמשים בו בזמן הנכון, ולכן כללים ברורים עדיפים על איסור מוחלט."],
- ["לדעתי, עדיף לראות סרט בקולנוע.",
-  "למשל, כשראיתי סרט פעולה בקולנוע, המסך הגדול והסאונד גרמו לי להרגיש שאני בתוך הסרט, ואף אחד לא עצר אותו באמצע.",
-  "זה מראה שבקולנוע מתרכזים רק בסרט, ולכן החוויה חזקה יותר מאשר בבית."],
- ["לדעתי, תלמידים צריכים לבחור בעצמם לפחות חלק מהמקצועות.",
-  "למשל, חברה שלי בחרה במגמת אמנות, ומאז היא משקיעה בלימודים הרבה יותר מבעבר.",
-  "זה מראה שתלמיד שלומד משהו שמעניין אותו מתאמץ יותר, ולכן הבחירה משפרת את הלמידה."]
-];
-var TOPICS=["האם כדאי לאסור טלפונים בבית הספר?","מה עדיף: לראות סרט בבית או בקולנוע?","האם תלמידים צריכים לבחור בעצמם אילו מקצועות ללמוד?"];
+/* ---------- helpers ---------- */
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function words(s){return String(s).trim().split(/\s+/).filter(Boolean);}
+function $(sel){return app.querySelector(sel);}
+function $$(sel){return Array.prototype.slice.call(app.querySelectorAll(sel));}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function dayKey(d){return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
 
-/* storage: a convenience only, the page works without it */
-var KEY="nisuach-demo-v1";
-var store={days:{},item:{},total:0};
-try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&p.days&&p.item)store=p;}}catch(e){}
-store.total=store.total||0;
-
-/* levels: a level is earned by finishing every drill twice */
-var ROUNDS=2,MAXL=5,LNAMES=["חימום","קצב","זרימה","דיוק","קול משלך"];
-store.counts=store.counts||{};
-function cnt(id){return store.counts[id]||0;}
-function levelInfo(){
-  var c=DRILLS.map(function(d){return cnt(d.id);});
-  var L=Math.min(MAXL,1+Math.floor(Math.min.apply(null,c)/ROUNDS)),max=L===MAXL,need=ROUNDS*DRILLS.length,left=0;
-  c.forEach(function(v){left+=Math.max(0,ROUNDS*L-v);});
-  return{n:L,name:LNAMES[L-1],max:max,left:max?0:left,pct:max?100:Math.round((need-left)/need*100)};
+if(!BANK){
+  app.innerHTML='<div class="sheet"><h2>קובץ התרגילים חסר</h2><p>הקובץ exercises.js צריך להיות באותה תיקייה כמו הקובץ הזה, עם השם הזה בדיוק.</p></div>';
+  return;
 }
+var BYID={};
+DRILLS.forEach(function(d){(BANK[d.id]||[]).forEach(function(it){it.drill=d.id;BYID[it.id]=it;});});
 
-/* Gaya, the coach: an original character drawn inline */
+/* ---------- storage: one record per user, progress kept by exercise ID ---------- */
+var KEY="nisuach-v2";
+var db={users:{},current:null};
+try{var raw=localStorage.getItem(KEY);if(raw){var parsed=JSON.parse(raw);if(parsed&&parsed.users)db=parsed;}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){}}
+function me(){return db.current&&db.users[db.current]||null;}
+function addUser(name,level){
+  var id="u"+Date.now().toString(36)+Math.floor(Math.random()*1000);
+  db.users[id]={name:name,level:level,done:{},days:{},counts:{},cur:{},total:0};
+  db.current=id;save();
+}
+function cnt(u,L,drill){return (u.counts[L]&&u.counts[L][drill])||0;}
+function fresh(drill,L){var u=me();return (BANK[drill]||[]).filter(function(it){return it.level===L&&!u.done[it.id];});}
+function poolSize(drill,L){return (BANK[drill]||[]).filter(function(it){return it.level===L;}).length;}
+/* the exercise in progress stays the same until it is finished; a finished one never comes back */
+function pick(drill){
+  var u=me(),L=u.level,c=BYID[u.cur[drill]];
+  if(c&&c.level===L&&!u.done[c.id])return c;
+  var f=fresh(drill,L);if(!f.length)return null;
+  var it=f[Math.floor(Math.random()*f.length)];u.cur[drill]=it.id;save();return it;
+}
+function finishItem(id){var u=me(),it=BYID[id];u.done[id]=dayKey(new Date());if(it&&u.cur[it.drill]===id)delete u.cur[it.drill];save();}
+function doneToday(){var u=me();return u.days[dayKey(new Date())]||[];}
+function streak(){var u=me(),d=new Date(),n=0;if(!(u.days[dayKey(d)]||[]).length)d.setDate(d.getDate()-1);
+  while((u.days[dayKey(d)]||[]).length){n++;d.setDate(d.getDate()-1);}return n;}
+function levelInfo(){
+  var u=me(),L=u.level,need=ROUNDS*DRILLS.length,left=0;
+  DRILLS.forEach(function(d){left+=Math.max(0,ROUNDS-cnt(u,L,d.id));});
+  return{n:L,name:LEVELS[L].name,max:L===MAXL,left:left,pct:Math.round((need-left)/need*100)};
+}
+function setLevel(L){var u=me();u.level=L;u.cur={};save();}
+
+/* ---------- אודיה ---------- */
 function avatar(mood){
   var eyes=mood==="happy"?'<path d="M45 58q5-7 10 0M65 58q5-7 10 0" fill="none" stroke="#1D1A33" stroke-width="3" stroke-linecap="round"/>':
     '<circle cx="50" cy="56" r="3.2" fill="#1D1A33"/><circle cx="70" cy="56" r="3.2" fill="#1D1A33"/>'+(mood==="think"?'<path d="M64 47l11-3" stroke="#2B2140" stroke-width="3" stroke-linecap="round"/>':'');
@@ -268,16 +266,16 @@ function avatar(mood){
     eyes+mouth+'</svg></span>';
 }
 
-/* celebrations */
+/* ---------- celebrations ---------- */
 var cv=null,run=0;
 function confetti(n){
   if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
   if(!cv){cv=document.createElement("canvas");cv.className="confetti";document.body.appendChild(cv);}
   var ctx=cv.getContext("2d"),W=cv.width=window.innerWidth,H=cv.height=window.innerHeight;
-  var cols=["#F04E42","#0B8F8F","#F3BC5A","#7C5CFF","#45CFCB","#FF9DB0"],ps=[],i,me=++run,t0=performance.now(),life=2600;
+  var cols=["#F04E42","#0B8F8F","#F3BC5A","#7C5CFF","#45CFCB","#FF9DB0"],ps=[],i,mine=++run,t0=performance.now(),life=2600;
   for(i=0;i<n;i++)ps.push({x:W/2+(Math.random()-.5)*W*.5,y:H*.4,vx:(Math.random()-.5)*16,vy:-Math.random()*14-4,s:6+Math.random()*7,r:Math.random()*6.28,vr:(Math.random()-.5)*.4,c:cols[i%cols.length]});
   function frame(t){
-    if(me!==run)return;
+    if(mine!==run)return;
     var el=t-t0;ctx.clearRect(0,0,W,H);
     if(el>=life)return;
     ctx.globalAlpha=Math.max(0,1-el/life);
@@ -287,146 +285,201 @@ function confetti(n){
   }
   requestAnimationFrame(frame);
 }
-function levelUp(li){
+function levelUp(L){
   var o=document.createElement("div");o.className="overlay";
-  o.innerHTML='<div class="lvl-card" role="dialog" aria-modal="true" aria-label="עלית רמה">'+avatar("happy")+
-    '<div class="label">עלית רמה</div><div class="lvl-num">רמה '+li.n+'</div><p>הגעת לשלב "'+li.name+'". '+
-    (li.max?"זו הרמה הגבוהה ביותר כרגע.":"עוד "+li.left+" תרגילים לרמה הבאה.")+'</p><button class="btn" type="button">ממשיכה</button></div>';
+  o.innerHTML='<div class="lvl-card" role="dialog" aria-modal="true" aria-label="עלייה ברמה">'+avatar("happy")+
+    '<div class="label">כל הכבוד!</div><div class="lvl-num">רמה '+L+'</div><p>עלייה לשלב "'+LEVELS[L].name+'". מעכשיו: '+LEVELS[L].desc+'</p>'+
+    '<button class="btn" type="button">ממשיכים</button></div>';
   document.body.appendChild(o);
   var b=o.querySelector("button");b.onclick=function(){o.remove();};b.focus();
   confetti(240);
 }
+/* one credit per finished exercise */
 var credited=false;
-function credit(id,win){
-  var up=null;
-  if(!credited){credited=true;var before=levelInfo().n;store.total++;store.counts[id]=cnt(id)+1;markDone(id);var after=levelInfo();if(after.n>before)up=after;}
-  if(up)levelUp(up);else if(win)confetti(90);
+function credit(drill,win){
+  if(credited)return;credited=true;
+  var u=me(),L=u.level,k=dayKey(new Date());
+  u.counts[L]=u.counts[L]||{};u.counts[L][drill]=cnt(u,L,drill)+1;u.total++;
+  var a=u.days[k]||[];if(a.indexOf(drill)<0)a.push(drill);u.days[k]=a;
+  var up=L<MAXL&&DRILLS.every(function(d){return cnt(u,L,d.id)>=ROUNDS;});
+  if(up)setLevel(L+1);else save();
+  if(up)levelUp(L+1);else if(win)confetti(90);
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
-function dayKey(d){return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
-function doneToday(){return store.days[dayKey(new Date())]||[];}
-function markDone(id){var k=dayKey(new Date());var a=store.days[k]||[];if(a.indexOf(id)<0)a.push(id);store.days[k]=a;save();}
-function streak(){var d=new Date(),n=0;if(!(store.days[dayKey(d)]||[]).length)d.setDate(d.getDate()-1);
-  while((store.days[dayKey(d)]||[]).length){n++;d.setDate(d.getDate()-1);}return n;}
-function itemOf(id,list){var i=store.item[id]||0;return list[i%list.length];}
-function nextItem(id){store.item[id]=(store.item[id]||0)+1;save();}
 
-function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
-function words(s){return s.trim().split(/\s+/).filter(Boolean);}
-function $(sel){return app.querySelector(sel);}
-function $$(sel){return Array.prototype.slice.call(app.querySelectorAll(sel));}
-function fb(kind,title,text){return '<div class="fb '+kind+'">'+avatar(kind==="good"?"happy":"think")+'<div class="tx"><strong>'+esc(title)+'</strong>'+(text?'<p>'+esc(text)+'</p>':'')+'</div></div>';}
+/* ---------- shared pieces ---------- */
 function fbRaw(kind,title,html){return '<div class="fb '+kind+'">'+avatar(kind==="good"?"happy":"think")+'<div class="tx"><strong>'+esc(title)+'</strong>'+html+'</div></div>';}
+function fb(kind,title,text){return fbRaw(kind,title,text?'<p>'+esc(text)+'</p>':'');}
 function example(text,label){return '<div class="example"><small>'+esc(label||"דוגמה אחת מתוך הרבה אפשריות")+'</small>'+esc(text)+'</div>';}
 function endButtons(){return '<div class="row"><button class="btn" id="again" type="button">עוד אחד</button><button class="btn ghost" id="home" type="button">חזרה לרשימה</button></div>';}
-function wireEnd(id){$("#again").onclick=function(){nextItem(id);render();};$("#home").onclick=function(){go("home");};}
-
-function home(){
-  var done=doneToday(),s=streak(),li=levelInfo();
-  var segs=DRILLS.map(function(d){return '<i class="'+(done.indexOf(d.id)>=0?"on":"")+'"></i>';}).join("");
-  var list=DRILLS.map(function(d,i){var ok=done.indexOf(d.id)>=0,lv=Math.min(ROUNDS,Math.max(0,cnt(d.id)-ROUNDS*(li.n-1)));
-    return '<li><button class="drill'+(ok?" done":"")+'" type="button" data-go="'+d.id+'"><span class="num">'+(i+1)+'</span><h3>'+d.title+'</h3><p>'+d.desc+'</p>'+
-    '<span class="meta"><span class="pill">'+d.tag+'</span><span class="pill">'+d.mins+' דקות</span>'+(li.max?'':'<span class="pill'+(lv>=ROUNDS?' ok':'')+'">'+lv+' מתוך '+ROUNDS+' לרמה</span>')+'</span>'+
-    (ok?'<span class="tick" role="img" aria-label="בוצע היום"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>':'')+'</button></li>';}).join("");
-  var say=!store.total?"היי, אני אודיה. בחרי תרגיל אחד ונתחיל. זה לוקח שתי דקות.":
-    done.length>=DRILLS.length?"סיימת את כל התרגילים של היום. כל הכבוד, נתראה מחר.":
-    !done.length?"טוב שחזרת. מתחילות בתרגיל אחד קצר?":
-    li.max?"את ברמה הגבוהה ביותר. ממשיכות לשמור על הכושר.":
-    li.left===1?"עוד תרגיל אחד ואת עולה רמה.":"עוד "+li.left+" תרגילים ואת ברמה "+(li.n+1)+".";
-  var leftTxt=li.max?"הגעת לרמה הגבוהה ביותר בהדגמה":(li.left===1?"עוד תרגיל אחד לרמה "+(li.n+1):"עוד "+li.left+" תרגילים לרמה "+(li.n+1))+" · כל תרגיל פעמיים";
-  app.innerHTML='<header class="top"><div><div class="brand">ניסוח<span>.</span></div><p class="tagline">עשר דקות ביום. משפט אחד בכל פעם.</p></div>'+
-    '<div class="coach">'+avatar(done.length?"happy":"neutral")+'<div class="bubble"><b>אודיה</b>'+say+'</div></div></header>'+
-    '<div class="stats"><div class="today"><div class="today-row"><span class="lvl-name">רמה '+li.n+' · '+li.name+'</span><small>'+store.total+' תרגילים עד היום</small></div>'+
-    '<div class="track"><i style="width:'+li.pct+'%"></i></div><div class="today-row"><span>'+leftTxt+'</span></div></div>'+
-    '<div class="today"><div class="today-row"><span>היום</span><span>'+done.length+' מתוך '+DRILLS.length+'</span></div><div class="segs">'+segs+'</div>'+
-    '<div class="today-row"><small>רצף ימים</small><small>'+s+'</small></div></div></div>'+
-    '<ul class="drills">'+list+'</ul>'+
-    '<p class="note">גרסת הדגמה. התרגילים קבועים ואין כאן בינה מלאכותית, ולכן בתרגילי הכתיבה אין ציון: משווים לדוגמה ובודקים לבד. ההתקדמות נשמרת רק בדפדפן הזה.</p>';
-  $$("[data-go]").forEach(function(b){b.onclick=function(){go(b.getAttribute("data-go"));};});
-}
-
-function shell(d,inner){
-  var n=DRILLS.indexOf(d)+1;
-  app.innerHTML='<div class="bar"><button class="back" type="button" id="back">→ חזרה לרשימה</button><span class="pill">'+d.mins+' דקות</span></div>'+
+function wireEnd(){$("#again").onclick=function(){render();};$("#home").onclick=function(){go("home");};}
+function shell(d,inner,itemId){
+  var n=DRILLS.indexOf(d)+1,u=me();
+  app.innerHTML='<div class="bar"><button class="back" type="button" id="back">→ חזרה לרשימה</button>'+
+    '<span class="row"><span class="pill">רמה '+u.level+'</span><span class="pill">'+d.mins+' דקות</span>'+(itemId?'<span class="id">'+esc(itemId)+'</span>':'')+'</span></div>'+
     '<div class="head"><span class="num">'+n+'</span><div><h2>'+d.title+'</h2><p>'+d.why+'</p></div></div>'+
     '<section class="sheet">'+inner+'<div id="out" class="sheet" style="border:0;padding:0" aria-live="polite"></div></section>';
   $("#back").onclick=function(){go("home");};
 }
+function exhausted(d){
+  var u=me(),L=u.level;
+  shell(d,fb("good","כל הכבוד! כל תרגילי \""+d.title+"\" ברמה "+L+" הושלמו",
+      L<MAXL?"אפשר לעבור לרמה "+(L+1)+", או לתרגל שוב את התרגילים של הרמה הזו.":"אפשר לתרגל שוב את התרגילים של הרמה הזו.")+
+    '<div class="row">'+(L<MAXL?'<button class="btn" id="up" type="button">מעבר לרמה '+(L+1)+'</button>':'')+
+    '<button class="btn ghost" id="redo" type="button">תרגול חוזר</button><button class="btn ghost" id="home" type="button">חזרה לרשימה</button></div>');
+  if($("#up"))$("#up").onclick=function(){setLevel(L+1);render();};
+  $("#redo").onclick=function(){(BANK[d.id]||[]).forEach(function(it){if(it.level===L)delete u.done[it.id];});save();render();};
+  $("#home").onclick=function(){go("home");};
+}
 
+/* ---------- start, users, level ---------- */
+function levelCards(sel){
+  return '<div class="lvl-opts">'+[1,2,3].map(function(L){
+    return '<button class="lvl-opt" type="button" data-l="'+L+'" aria-pressed="'+(L===sel)+'"><b>'+L+'</b><strong>'+LEVELS[L].name+'</strong><span>'+LEVELS[L].desc+'</span></button>';
+  }).join("")+'</div>';
+}
+function wireLevelCards(onPick){
+  $$(".lvl-opt").forEach(function(b){b.onclick=function(){
+    $$(".lvl-opt").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});onPick(+b.getAttribute("data-l"));};});
+}
+function start(){
+  var L=1,ids=Object.keys(db.users);
+  app.innerHTML='<header class="top"><div><div class="brand">ניסוח<span>.</span></div><p class="tagline">עשר דקות ביום. משפט אחד בכל פעם.</p></div>'+
+    '<div class="coach">'+avatar("happy")+'<div class="bubble"><b>אודיה</b>היי, אני אודיה. לפני שמתחילים: מה השם, ובאיזו רמה להתחיל?</div></div></header>'+
+    (ids.length?'<section class="sheet"><div class="label">ממשיכים עם משתמש קיים</div><div class="users">'+
+      ids.map(function(id){return '<button class="btn ghost" type="button" data-user="'+id+'">'+esc(db.users[id].name)+'</button>';}).join("")+'</div></section>':'')+
+    '<section class="sheet"><div class="field"><label for="name">'+(ids.length?"או משתמש חדש: ":"")+'השם</label><input type="text" id="name" maxlength="20" autocomplete="off"></div>'+
+    '<div class="field"><span class="label">רמת פתיחה</span>'+levelCards(1)+'</div>'+
+    '<p class="count">אם לא בטוחים, כדאי להתחיל ברמה 1. אפשר לשנות את הרמה בכל רגע.</p>'+
+    '<p class="err" id="err" aria-live="polite"></p><div class="row"><button class="btn" id="start" type="button">התחלה</button></div></section>';
+  wireLevelCards(function(x){L=x;});
+  $$("[data-user]").forEach(function(b){b.onclick=function(){db.current=b.getAttribute("data-user");save();go("home");};});
+  $("#start").onclick=function(){
+    var n=$("#name").value.trim();
+    if(!n){$("#err").textContent="צריך לכתוב שם כדי להתחיל.";$("#name").focus();return;}
+    addUser(n,L);go("home");
+  };
+}
+function levelScreen(){
+  var u=me();
+  app.innerHTML='<div class="bar"><button class="back" type="button" id="back">→ חזרה לרשימה</button></div>'+
+    '<div class="head"><div><h2>החלפת רמה</h2><p>תרגילים שכבר הושלמו נשמרים בכל רמה. ההתקדמות לרמה הבאה נספרת בנפרד בכל רמה.</p></div></div>'+
+    '<section class="sheet">'+levelCards(u.level)+'</section>';
+  $("#back").onclick=function(){go("home");};
+  wireLevelCards(function(L){setLevel(L);go("home");});
+}
+
+/* ---------- home ---------- */
+function home(){
+  var u=me(),done=doneToday(),s=streak(),li=levelInfo(),L=u.level;
+  var segs=DRILLS.map(function(d){return '<i class="'+(done.indexOf(d.id)>=0?"on":"")+'"></i>';}).join("");
+  var list=DRILLS.map(function(d,i){
+    var ok=done.indexOf(d.id)>=0,r=Math.min(ROUNDS,cnt(u,L,d.id)),nf=fresh(d.id,L).length;
+    return '<li><button class="drill'+(ok?" done":"")+'" type="button" data-go="'+d.id+'"><span class="num">'+(i+1)+'</span><h3>'+d.title+'</h3><p>'+d.desc+'</p>'+
+    '<span class="meta"><span class="pill">'+d.mins+' דקות</span><span class="pill'+(r>=ROUNDS?' ok':'')+'">'+r+' מתוך '+ROUNDS+' ברמה</span>'+
+    '<span class="pill" data-fresh="'+nf+'">'+(nf?nf+" חדשים":"הכול הושלם")+'</span></span>'+
+    (ok?'<span class="tick" role="img" aria-label="בוצע היום"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>':'')+'</button></li>';}).join("");
+  var say=!u.total?"היי "+u.name+", אני אודיה. בוחרים תרגיל אחד ומתחילים. זה לוקח שתי דקות.":
+    done.length>=DRILLS.length?"כל הכבוד! כל התרגילים של היום הושלמו. נתראה מחר.":
+    !done.length?"טוב לראות אותך שוב, "+u.name+". נתחיל בתרגיל אחד קצר?":
+    li.max&&!li.left?"כל הכבוד! הרמה הגבוהה ביותר הושלמה. אפשר להמשיך לתרגל.":
+    li.max?"עוד "+li.left+" תרגילים להשלמת הרמה הגבוהה ביותר.":
+    li.left===1?"עוד תרגיל אחד ועולים לרמה "+(L+1)+".":"עוד "+li.left+" תרגילים לרמה "+(L+1)+".";
+  var leftTxt=li.max?(li.left?"עוד "+li.left+" תרגילים להשלמת הרמה":"הרמה הגבוהה ביותר הושלמה"):
+    (li.left===1?"עוד תרגיל אחד לרמה "+(L+1):"עוד "+li.left+" תרגילים לרמה "+(L+1))+" · כל תרגיל פעמיים";
+  app.innerHTML='<header class="top"><div><div class="brand">ניסוח<span>.</span></div>'+
+    '<p class="who"><span>'+esc(u.name)+'</span><button class="linkbtn" id="switch-user" type="button">החלפת משתמש</button><button class="linkbtn" id="change-level" type="button">החלפת רמה</button></p></div>'+
+    '<div class="coach">'+avatar(done.length?"happy":"neutral")+'<div class="bubble"><b>אודיה</b>'+esc(say)+'</div></div></header>'+
+    '<div class="stats"><div class="today"><div class="today-row"><span class="lvl-name">רמה '+L+' · '+li.name+'</span><small>סה״כ '+u.total+' תרגילים</small></div>'+
+    '<div class="track"><i style="width:'+li.pct+'%"></i></div><div class="today-row"><span>'+leftTxt+'</span></div></div>'+
+    '<div class="today"><div class="today-row"><span>היום</span><span>'+done.length+' מתוך '+DRILLS.length+'</span></div><div class="segs">'+segs+'</div>'+
+    '<div class="today-row"><small>רצף ימים</small><small>'+s+'</small></div></div></div>'+
+    '<ul class="drills">'+list+'</ul>'+
+    '<p class="note">ההתקדמות נשמרת בדפדפן הזה, לכל משתמש בנפרד. תרגיל שהושלם לא חוזר, אלא אם בוחרים לתרגל שוב. המספר הקטן בראש כל תרגיל הוא המזהה שלו בקובץ התרגילים.</p>';
+  $$("[data-go]").forEach(function(b){b.onclick=function(){go(b.getAttribute("data-go"));};});
+  $("#switch-user").onclick=function(){go("start");};
+  $("#change-level").onclick=function(){go("level");};
+}
+
+/* ---------- drills ---------- */
 function expand(d){
-  var it=itemOf(d.id,EXPAND);
+  var it=pick(d.id);if(!it)return exhausted(d);
   shell(d,'<div><div class="label">המשפט הקצר</div><p class="prompt">'+esc(it.base)+'</p></div>'+
-    '<div class="field"><label for="ans">כתבי אותו מחדש עם יותר פרטים</label><textarea id="ans" rows="3" placeholder="'+esc(it.base.replace(".",""))+'..."></textarea></div>'+
-    '<div><div class="label">סמני כל שאלה שהמשפט שלך עונה עליה</div><div class="row" style="margin-top:8px">'+
+    '<div class="field"><label for="ans">כותבים אותו מחדש, עם יותר פרטים</label><textarea id="ans" rows="3" placeholder="'+esc(it.base.replace(".",""))+'..."></textarea></div>'+
+    '<div><div class="label">מסמנים כל שאלה שהמשפט החדש עונה עליה</div><div class="row" style="margin-top:8px">'+
     it.qs.map(function(q){return '<button class="chip" type="button" aria-pressed="false">'+esc(q)+'</button>';}).join("")+'</div></div>'+
-    '<div class="row"><button class="btn" id="check" type="button">בדקי</button></div>');
+    '<div class="row"><button class="btn" id="check" type="button">בדיקה</button></div>',it.id);
   $$(".chip").forEach(function(c){c.onclick=function(){c.setAttribute("aria-pressed",c.getAttribute("aria-pressed")==="true"?"false":"true");};});
   $("#check").onclick=function(){
     var n=words($("#ans").value).length,base=words(it.base).length,q=$$('.chip[aria-pressed="true"]').length,h;
-    if(!n){$("#out").innerHTML=fb("warn","עוד לא כתבת משפט","כתבי משפט בתיבה ואז לחצי שוב.");return;}
-    if(n<base+4)h=fb("warn","המשפט עדיין קצר","יש בו "+n+" מילים. נסי לענות על עוד שאלה אחת מהרשימה.");
-    else if(q<2)h=fb("warn","המשפט גדל מ־"+base+" ל־"+n+" מילים","סימנת פחות משתי שאלות. בדקי אם אפשר להוסיף עוד פרט.");
-    else h=fb("good","המשפט גדל מ־"+base+" ל־"+n+" מילים","ענית על "+q+" שאלות. קראי אותו בקול ובדקי שהוא נשמע טבעי.");
-    $("#out").innerHTML=h+example(it.ex)+endButtons();wireEnd(d.id);credit(d.id,h.indexOf('fb good')>=0);
+    if(!n){$("#out").innerHTML=fb("warn","עוד אין כאן משפט","כותבים משפט בתיבה ולוחצים שוב על בדיקה.");return;}
+    if(n<base+3){$("#out").innerHTML=fb("warn","צריך עוד כמה מילים","המשפט החדש צריך להיות ארוך לפחות בשלוש מילים מהמשפט הקצר. אפשר לענות על עוד שאלה מהרשימה.");return;}
+    if(q<2)h=fb("warn","המשפט גדל מ־"+base+" ל־"+n+" מילים","סומנו פחות משתי שאלות. אפשר לבדוק אם יש מקום לעוד פרט.");
+    else h=fb("good","כל הכבוד! המשפט גדל מ־"+base+" ל־"+n+" מילים","המשפט עונה על "+q+" שאלות. כדאי לקרוא אותו בקול ולבדוק שהוא נשמע טבעי.");
+    finishItem(it.id);
+    $("#out").innerHTML=h+example(it.ex)+endButtons();wireEnd();credit(d.id,h.indexOf("fb good")>=0);
   };
 }
 
 function because(d){
-  var it=itemOf(d.id,BECAUSE),keys=["כי","אבל","לכן"];
+  var it=pick(d.id);if(!it)return exhausted(d);
+  var keys=["כי","אבל","לכן"];
   shell(d,'<div><div class="label">ההתחלה</div><p class="prompt">'+esc(it.stem)+'...</p></div>'+
-    keys.map(function(k,i){return '<div class="stem"><b>'+k+'</b><input type="text" id="s'+i+'" aria-label="המשך אחרי '+k+'" placeholder="המשיכי את המשפט"></div>';}).join("")+
-    '<div class="row"><button class="btn" id="check" type="button">בדקי</button></div>');
+    keys.map(function(k,i){return '<div class="stem"><b>'+k+'</b><input type="text" id="s'+i+'" aria-label="המשך אחרי '+k+'" placeholder="ממשיכים את המשפט"></div>';}).join("")+
+    '<div class="row"><button class="btn" id="check" type="button">בדיקה</button></div>',it.id);
   $("#check").onclick=function(){
-    var short=[],empty=0;
+    var empty=0,short=[];
     keys.forEach(function(k,i){var n=words($("#s"+i).value).length;if(!n)empty++;else if(n<3)short.push(k);});
-    if(empty===3){$("#out").innerHTML=fb("warn","עוד לא כתבת המשך","השלימי לפחות אחד מהמשפטים.");return;}
-    var h;
-    if(empty)h=fb("warn","נשארו "+empty+" המשכים ריקים","אפשר לחזור ולהשלים, או להשוות לדוגמאות.");
-    else if(short.length)h=fb("warn","ההמשך אחרי \""+short.join("\" ואחרי \"")+"\" קצר מאוד","נסי להוסיף עוד כמה מילים שמסבירות למה התכוונת.");
-    else h=fb("good","שלושה המשכים מלאים","בדקי: \"כי\" נותן סיבה, \"אבל\" מציג צד שני, \"לכן\" מציג תוצאה.");
-    credit(d.id,h.indexOf('fb good')>=0);
-    $("#out").innerHTML=h+example(it.stem+" "+it.ex[0]+" "+it.stem+" "+it.ex[1]+" "+it.stem+" "+it.ex[2],"דוגמאות להמשך")+endButtons();wireEnd(d.id);
+    if(empty){$("#out").innerHTML=fb("warn","צריך להשלים את כל שלושת ההמשכים","נשארו "+empty+" המשכים ריקים.");return;}
+    if(short.length){$("#out").innerHTML=fb("warn","ההמשך אחרי \""+short.join("\" ואחרי \"")+"\" קצר מדי","בכל המשך צריכות להיות לפחות שלוש מילים שמסבירות את הכוונה.");return;}
+    finishItem(it.id);
+    $("#out").innerHTML=fb("good","כל הכבוד! שלושה המשכים מלאים","כדאי לבדוק: ״כי״ נותן סיבה, ״אבל״ מציג צד שני, ״לכן״ מציג תוצאה.")+
+      example(it.ex.map(function(e){return it.stem+" "+e;}).join(" "),"דוגמאות להמשך")+endButtons();
+    wireEnd();credit(d.id,true);
   };
 }
 
+var CONN=["כי","אבל","לכן","בגלל","למרות","כאשר","מפני","משום","כיוון","מכיוון","אך","אז","כדי","אחרי","לפני","עד","אף","ואילו","מאחר","אולם","אלא","כך","שכן","לפיכך","בכל","גם","אחר"];
 function combine(d){
-  var it=itemOf(d.id,COMBINE);
-  var CONN=["כי","אבל","לכן","ולכן","בגלל","למרות","כאשר","מפני","משום","כיוון","מכיוון","אך","אז","כדי","אחרי","לפני","עד"];
-  shell(d,'<div><div class="label">שלושה משפטים קצרים</div><ul class="lines">'+it.parts.map(function(p){return "<li>"+esc(p)+"</li>";}).join("")+'</ul></div>'+
-    '<div class="field"><label for="ans">חברי אותם למשפט אחד <small>אפשר לשנות מילים ולהחליף סדר</small></label><textarea id="ans" rows="3"></textarea></div>'+
-    '<div class="row"><button class="btn" id="check" type="button">בדקי</button></div>');
+  var it=pick(d.id);if(!it)return exhausted(d);
+  var partsWords=words(it.parts.join(" ")).length,need=Math.max(5,Math.ceil(partsWords*0.55));
+  shell(d,'<div><div class="label">המשפטים הקצרים</div><ul class="lines">'+it.parts.map(function(p){return "<li>"+esc(p)+"</li>";}).join("")+'</ul></div>'+
+    '<div class="field"><label for="ans">מחברים אותם למשפט אחד <small>אפשר לשנות מילים ולהחליף סדר</small></label><textarea id="ans" rows="3"></textarea></div>'+
+    '<div class="row"><button class="btn" id="check" type="button">בדיקה</button></div>',it.id);
   $("#check").onclick=function(){
     var t=$("#ans").value.trim();
-    if(!t){$("#out").innerHTML=fb("warn","עוד לא כתבת משפט","כתבי משפט בתיבה ואז לחצי שוב.");return;}
+    if(!t){$("#out").innerHTML=fb("warn","עוד אין כאן משפט","כותבים משפט בתיבה ולוחצים שוב על בדיקה.");return;}
     var ends=(t.replace(/[.!?]+\s*$/,"").match(/[.!?]/g)||[]).length;
-    var toks=words(t.replace(/[.,!?;:"']/g," "));
-    var has=toks.some(function(w){return CONN.indexOf(w)>=0||/^כש./.test(w)||/^(ש|וש)(ה|ל|ב)/.test(w);});
-    var h;
-    if(ends>0)h=fb("warn","נראה שיש כאן יותר ממשפט אחד","יש נקודה באמצע. נסי להחליף אותה במילת קישור כמו כי, אבל או למרות.");
-    else if(!has)h=fb("warn","לא מצאתי מילת קישור מוכרת","אולי השתמשת במילה שאני לא מכירה. השווי לדוגמה ובדקי שהקשר בין הרעיונות ברור.");
-    else h=fb("good","משפט אחד עם מילת קישור","בדקי שכל שלושת הרעיונות נמצאים בו.");
-    $("#out").innerHTML=h+example(it.ex)+endButtons();wireEnd(d.id);credit(d.id,h.indexOf('fb good')>=0);
+    if(ends>0){$("#out").innerHTML=fb("warn","יש כאן יותר ממשפט אחד","יש נקודה באמצע. מחליפים אותה במילת קישור כמו כי, אבל או למרות.");return;}
+    var toks=words(t.replace(/[.,!?;:"'״׳]/g," "));
+    if(toks.length<need){$("#out").innerHTML=fb("warn","חסרים רעיונות","המשפט צריך לכלול את כל הרעיונות מהמשפטים הקצרים.");return;}
+    var has=toks.some(function(w){var b=w.replace(/^ו/,"");return CONN.indexOf(w)>=0||CONN.indexOf(b)>=0||/^ו?כש./.test(w)||/^ו?ש(ה|ל|ב)/.test(w);});
+    var h=has?fb("good","כל הכבוד! משפט אחד עם מילת קישור","כדאי לבדוק שכל הרעיונות נמצאים בו."):
+      fb("warn","לא נמצאה מילת קישור מוכרת","ייתכן שיש כאן מילה שהבדיקה לא מכירה. כדאי להשוות לדוגמה.");
+    finishItem(it.id);
+    $("#out").innerHTML=h+example(it.ex)+endButtons();wireEnd();credit(d.id,has);
   };
 }
 
 function connectors(d){
+  var u=me(),round=shuffle(fresh(d.id,u.level)).slice(0,5);
+  if(!round.length)return exhausted(d);
   var i=0,score=0;
   function q(){
-    var it=QUIZ[i];
-    shell(d,'<div class="row" style="justify-content:space-between"><span class="label">שאלה '+(i+1)+' מתוך '+QUIZ.length+'</span><span class="count">נכונות: '+score+'</span></div>'+
+    var it=round[i],opts=shuffle(it.opts);
+    shell(d,'<div class="row" style="justify-content:space-between"><span class="label">שאלה '+(i+1)+' מתוך '+round.length+'</span><span class="count">נכונות: '+score+'</span></div>'+
       '<p class="prompt">'+esc(it.a)+' <span class="gap">&nbsp;</span>'+(it.b.charAt(0)===","?"":" ")+esc(it.b)+'</p>'+
-      '<div class="opts">'+it.opts.map(function(o){return '<button class="opt" type="button">'+esc(o)+'</button>';}).join("")+'</div>');
+      '<div class="opts">'+opts.map(function(o){return '<button class="opt" type="button">'+esc(o)+'</button>';}).join("")+'</div>',it.id);
     $$(".opt").forEach(function(b){b.onclick=function(){
-      var ok=b.textContent===it.right;if(ok)score++;
+      var ok=b.textContent===it.right;if(ok){score++;finishItem(it.id);}
       $$(".opt").forEach(function(x){x.disabled=true;if(x.textContent===it.right)x.classList.add("right");});
       if(!ok)b.classList.add("wrong");
-      var last=i===QUIZ.length-1;
+      var last=i===round.length-1;
       var clean=function(t){return t.replace(/^[,\s]+|[.,\s]+$/g,"");};
       var detail='<p>'+it.why+'</p><div class="parts"><div class="part"><small>'+esc(it.l[0])+'</small><b>'+esc(clean(it.a))+'</b></div>'+
         '<div class="link">'+esc(it.right)+'</div><div class="part"><small>'+esc(it.l[1])+'</small><b>'+esc(clean(it.b))+'</b></div></div>';
-      var nextLabel=last?"לסיכום":"לשאלה הבאה",left=5;
-      $("#out").innerHTML=fbRaw(ok?"good":"bad",ok?"נכון":"התשובה היא \""+it.right+"\"",detail)+
-        '<div class="row"><button class="btn wait" id="next" type="button" disabled>קראי את ההסבר · <span class="clock">0:05</span></button></div>';
+      var nextLabel=last?"לסיכום":"לשאלה הבאה",left=LOCK;
+      $("#out").innerHTML=fbRaw(ok?"good":"bad",ok?"כל הכבוד, נכון":"התשובה הנכונה: \""+it.right+"\"",detail)+
+        '<div class="row"><button class="btn wait" id="next" type="button" disabled>קוראים את ההסבר · <span class="clock">0:0'+LOCK+'</span></button></div>';
       var nb=$("#next");
       nb.onclick=function(){if(last)end();else{i++;q();}};
       var tick=setInterval(function(){
@@ -438,88 +491,99 @@ function connectors(d){
     };});
   }
   function end(){
-    credit(d.id,score>=4);
-    shell(d,fb(score>=4?"good":"warn",score+" מתוך "+QUIZ.length+" נכונות",score>=4?"את מזהה היטב את היחס בין הרעיונות.":"כדאי לחזור על זה מחר. שימי לב אם החלק השני מנוגד, מוסיף, מדגים או נובע מהראשון.")+
-      '<div class="row"><button class="btn" id="again" type="button">סיבוב נוסף</button><button class="btn ghost" id="home" type="button">חזרה לרשימה</button></div>');
-    $("#again").onclick=function(){i=0;score=0;credited=false;q();};$("#home").onclick=function(){go("home");};
+    var good=score>=Math.ceil(round.length*0.8);
+    credit(d.id,good);
+    shell(d,fb(good?"good":"warn",(good?"כל הכבוד! ":"")+score+" מתוך "+round.length+" נכונות",
+      good?"זיהוי מצוין של הקשר בין הרעיונות.":"שאלות שהיו בהן טעויות יחזרו בסבב אחר. כדאי לשים לב אם החלק השני מנוגד, מוסיף, מדגים, מסביר או נובע מהראשון.")+
+      '<div class="row"><button class="btn" id="again" type="button">סבב נוסף</button><button class="btn ghost" id="home" type="button">חזרה לרשימה</button></div>');
+    $("#again").onclick=function(){render();};$("#home").onclick=function(){go("home");};
   }
   q();
 }
 
 function order(d){
-  var correct=itemOf(d.id,ORDER);
-  var pool=correct.map(function(_,i){return i;});
-  do{pool.sort(function(){return Math.random()-.5;});}while(pool.every(function(v,i){return v===i;}));
+  var it=pick(d.id);if(!it)return exhausted(d);
+  var correct=it.s,pool=correct.map(function(_,i){return i;});
+  do{pool=shuffle(pool);}while(pool.every(function(v,i){return v===i;}));
   var built=[],checked=false;
   function draw(){
     var left=pool.filter(function(i){return built.indexOf(i)<0;});
     var ok=checked&&built.every(function(v,i){return v===i;});
-    shell(d,'<div><div class="label">משפטים מבולגנים: לחצי עליהם לפי הסדר הנכון</div><div class="stack" style="margin-top:8px">'+
+    shell(d,'<div><div class="label">משפטים מבולגנים: לוחצים עליהם לפי הסדר הנכון</div><div class="stack" style="margin-top:8px">'+
       (left.length?left.map(function(i){return '<button class="sent" type="button" data-add="'+i+'">'+esc(correct[i])+'</button>';}).join(""):'<div class="empty">כל המשפטים בפסקה.</div>')+'</div></div>'+
-      '<div><div class="label">הפסקה שלך: לחיצה על משפט מחזירה אותו למעלה</div><div class="stack" style="margin-top:8px">'+
+      '<div><div class="label">הפסקה: לחיצה על משפט מחזירה אותו למעלה</div><div class="stack" style="margin-top:8px">'+
       (built.length?built.map(function(i,pos){var cls=checked?(i===pos?" right":" wrong"):"";
-        return '<button class="sent'+cls+'" type="button" data-rm="'+i+'"'+(ok?" disabled":"")+'><span class="n">'+(pos+1)+'</span><span>'+esc(correct[i])+'</span>'+(ok?'<span class="pill ok role">'+ROLES[pos]+'</span>':'')+'</button>';}).join(""):'<div class="empty">עדיין ריק. מה המשפט שפותח את הפסקה?</div>')+'</div></div>'+
-      (ok?"":'<div class="row"><button class="btn" id="check" type="button"'+(built.length<correct.length?" disabled":"")+'>בדקי</button></div>'));
+        return '<button class="sent'+cls+'" type="button" data-rm="'+i+'"'+(ok?" disabled":"")+'><span class="n">'+(pos+1)+'</span><span>'+esc(correct[i])+'</span>'+(ok?'<span class="pill ok role">'+esc(it.roles[pos])+'</span>':'')+'</button>';}).join(""):'<div class="empty">עדיין ריק. איזה משפט פותח את הפסקה?</div>')+'</div></div>'+
+      (ok?"":'<div class="row"><button class="btn" id="check" type="button"'+(built.length<correct.length?" disabled":"")+'>בדיקה</button></div>'),it.id);
     $$("[data-add]").forEach(function(b){b.onclick=function(){built.push(+b.getAttribute("data-add"));checked=false;draw();};});
     $$("[data-rm]").forEach(function(b){b.onclick=function(){built.splice(built.indexOf(+b.getAttribute("data-rm")),1);checked=false;draw();};});
-    if(ok){credit(d.id,true);$("#out").innerHTML=fb("good","הסדר נכון","שימי לב לתפקיד של כל משפט: טענה, נימוק, הסבר וסיכום. זה השלד של כמעט כל תשובה מנומקת.")+endButtons();wireEnd(d.id);}
-    else if(checked){$("#out").innerHTML=fb("bad","עוד לא","המשפטים המסומנים באדום לא במקום. רמז: הטענה פותחת, והמשפט שמתחיל במילת סיכום סוגר.");}
+    if(ok){finishItem(it.id);credit(d.id,true);
+      $("#out").innerHTML=fb("good","כל הכבוד! הסדר נכון","כדאי לשים לב לתפקיד של כל משפט: "+it.roles.join(", ")+". זה השלד של תשובה מנומקת.")+endButtons();wireEnd();}
+    else if(checked){$("#out").innerHTML=fb("bad","עוד לא","המשפטים המסומנים באדום לא במקום. רמז: הטענה פותחת, והמשפט שמסכם סוגר.");}
     var c=$("#check");if(c)c.onclick=function(){checked=true;draw();};
   }
   draw();
 }
 
+var STEPS={
+ basic:[["הטענה","מה הדעה? משפט אחד ברור","לדעתי..."],["נימוק או דוגמה","מה מראה שזה נכון?","למשל..."],["הסבר","איך הנימוק מחזק את הטענה?","זה מראה ש..."]],
+ full:[["הטענה","מה הדעה? משפט אחד ברור","לדעתי..."],["נימוק","למה זה נכון?","הסיבה היא ש..."],["צד שני","מה טוענים מי שחושבים אחרת, ומה התשובה להם?","אמנם..., אולם..."],["מסקנה","מה יוצא מכל זה?","לפיכך..."]]
+};
 function paragraph(d){
-  var topic=0,canHint=levelInfo().n<3;
-  shell(d,'<div><div class="label">בחרי שאלה</div><div class="row" style="margin-top:8px">'+
-    TOPICS.map(function(t,i){return '<button class="chip" type="button" data-t="'+i+'" aria-pressed="'+(i===0)+'">'+esc(t)+'</button>';}).join("")+'</div></div>'+
-    '<div class="field"><label for="p0">1. הטענה שלי <small>מה דעתך? משפט אחד ברור</small></label><textarea id="p0" rows="2" placeholder="לדעתי..."></textarea></div>'+
-    '<div class="field"><label for="p1">2. נימוק או דוגמה <small>מה מראה שזה נכון?</small></label><textarea id="p1" rows="2" placeholder="למשל..."></textarea></div>'+
-    '<div class="field"><label for="p2">3. הסבר <small>איך הנימוק מחזק את הטענה?</small></label><textarea id="p2" rows="2" placeholder="זה מראה ש..."></textarea></div>'+
-    '<div class="row"><button class="btn" id="check" type="button">חברי לפסקה</button>'+
-    (canHint?'<button class="btn ghost" id="hint" type="button" aria-expanded="false">הראי לי דוגמה</button>':'<span class="count">מרמה 3 כותבים בלי דוגמה.</span>')+'</div>'+
-    '<div id="sample"></div>');
+  var u=me(),L=u.level,f=fresh(d.id,L);
+  if(!f.length)return exhausted(d);
+  var keep=(u.cur.paragraph||[]).filter(function(id){var t=BYID[id];return t&&t.level===L&&!u.done[id];});
+  if(keep.length<Math.min(3,f.length)){keep=shuffle(f).slice(0,3).map(function(t){return t.id;});u.cur.paragraph=keep;save();}
+  var topics=keep.map(function(id){return BYID[id];}),topic=0,steps=L===3?STEPS.full:STEPS.basic,canHint=L<3;
+  shell(d,'<div><div class="label">בוחרים שאלה</div><div class="row" style="margin-top:8px">'+
+    topics.map(function(t,i){return '<button class="chip" type="button" data-t="'+i+'" aria-pressed="'+(i===0)+'">'+esc(t.topic)+'</button>';}).join("")+'</div></div>'+
+    steps.map(function(s,i){return '<div class="field"><label for="p'+i+'">'+(i+1)+'. '+s[0]+' <small>'+s[1]+'</small></label><textarea id="p'+i+'" rows="2" placeholder="'+s[2]+'"></textarea></div>';}).join("")+
+    '<div class="row"><button class="btn" id="check" type="button">חיבור לפסקה</button>'+
+    (canHint?'<button class="btn ghost" id="hint" type="button" aria-expanded="false">להציג דוגמה</button>':'<span class="count">ברמה 3 כותבים בלי דוגמה.</span>')+'</div>'+
+    '<div id="sample"></div>',topics[0].id);
   var open=false;
   function drawSample(){
     var box=$("#sample"),hb=$("#hint");
     if(!hb)return;
-    hb.textContent=open?"הסתירי את הדוגמה":"הראי לי דוגמה";hb.setAttribute("aria-expanded",open?"true":"false");
+    hb.textContent=open?"להסתיר את הדוגמה":"להציג דוגמה";hb.setAttribute("aria-expanded",open?"true":"false");
     if(!open){box.innerHTML="";return;}
-    var names=["טענה","נימוק או דוגמה","הסבר"];
-    box.innerHTML='<div class="sample"><div class="sample-head"><span class="pill">דוגמה בלבד</span><span>כך נראים שלושת השלבים כשהם מתחברים. הדעה והנימוקים שלך יהיו אחרים.</span></div>'+
-      '<div class="label">'+esc(TOPICS[topic])+'</div>'+
-      SAMPLES[topic].map(function(t,i){return '<div class="sample-row"><span class="n">'+(i+1)+'</span><div><small>'+names[i]+'</small>'+esc(t)+'</div></div>';}).join("")+'</div>';
+    box.innerHTML='<div class="sample"><div class="sample-head"><span class="pill">דוגמה בלבד</span><span>כך נראים השלבים כשהם מתחברים. הדעה והנימוקים בפסקה שלך יהיו אחרים.</span></div>'+
+      '<div class="label">'+esc(topics[topic].topic)+'</div>'+
+      topics[topic].sample.map(function(t,i){return '<div class="sample-row"><span class="n">'+(i+1)+'</span><div><small>'+steps[i][0]+'</small>'+esc(t)+'</div></div>';}).join("")+'</div>';
   }
   if(canHint)$("#hint").onclick=function(){open=!open;drawSample();};
-  $$("[data-t]").forEach(function(b){b.onclick=function(){topic=+b.getAttribute("data-t");$$("[data-t]").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});drawSample();};});
+  $$("[data-t]").forEach(function(b){b.onclick=function(){topic=+b.getAttribute("data-t");
+    $$("[data-t]").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});
+    var idEl=app.querySelector(".bar .id");if(idEl)idEl.textContent=topics[topic].id;drawSample();};});
   $("#check").onclick=function(){
-    var parts=[0,1,2].map(function(i){return $("#p"+i).value.trim();});
-    var missing=parts.filter(function(p){return !p;}).length;
-    if(missing){$("#out").innerHTML=fb("warn","חסרים "+missing+" שלבים","מלאי את שלושת השלבים. משפט אחד בכל שלב מספיק.");return;}
+    var parts=steps.map(function(_,i){return $("#p"+i).value.trim();});
+    var weak=[];parts.forEach(function(p,i){if(words(p).length<4)weak.push(i+1);});
+    if(weak.length){$("#out").innerHTML=fb("warn","צריך עוד קצת בשלב "+weak.join(" ובשלב "),"בכל שלב צריך משפט של לפחות ארבע מילים.");return;}
     var text=parts.map(function(p){return /[.!?]$/.test(p)?p:p+".";}).join(" ");
-    var n=words(text).length;
-    credit(d.id,n>=30);
-    $("#out").innerHTML=fb(n>=30?"good":"warn","כתבת פסקה של "+n+" מילים",n>=30?"קראי אותה בקול פעם אחת ובדקי את שלוש השאלות למטה.":"היא קצרה יחסית. נסי להוסיף פרט אחד לנימוק או להסבר.")+
-      '<div><div class="label">'+esc(TOPICS[topic])+'</div><p class="result" id="res"></p></div>'+
-      '<div class="checks"><div class="label">בדיקה עצמית</div>'+
-      '<label><input type="checkbox" id="c0"><span>מי שקורא רק את המשפט הראשון מבין מה דעתי.</span></label>'+
-      '<label><input type="checkbox" id="c1"><span>הנימוק שלי מוחשי: יש בו דוגמה, מספר או מקרה.</span></label>'+
-      '<label><input type="checkbox" id="c2"><span>ההסבר מחבר בין הנימוק לטענה ולא חוזר עליה.</span></label></div>'+
-      '<div class="row"><button class="btn ghost" id="copy" type="button">העתיקי את הפסקה</button><button class="btn ghost" id="home" type="button">חזרה לרשימה</button></div>';
+    var n=words(text).length,target=L===3?45:30,good=n>=target,t=topics[topic];
+    finishItem(t.id);u.cur.paragraph=[];save();credit(d.id,good);
+    var checks=["מי שקורא רק את המשפט הראשון מבין מה הדעה שלי.","הנימוק מוחשי: יש בו דוגמה, מספר או מקרה.","ההסבר מחבר בין הנימוק לטענה ולא חוזר עליה."];
+    if(L===3)checks=["מי שקורא רק את המשפט הראשון מבין מה הדעה שלי.","הנימוק מוחשי: יש בו דוגמה, מספר או מקרה.","הצד השני מוצג בהגינות, ויש לו תשובה.","המסקנה נובעת מהנימוק ולא רק חוזרת על הטענה."];
+    $("#out").innerHTML=fb(good?"good":"warn",(good?"כל הכבוד! ":"")+"פסקה של "+n+" מילים",good?"כדאי לקרוא אותה בקול פעם אחת ולעבור על הבדיקה העצמית.":"היא קצרה יחסית. אפשר להוסיף פרט אחד לנימוק או להסבר.")+
+      '<div><div class="label">'+esc(t.topic)+'</div><p class="result" id="res"></p></div>'+
+      '<div class="checks"><div class="label">בדיקה עצמית</div>'+checks.map(function(c,i){return '<label><input type="checkbox" id="c'+i+'"><span>'+c+'</span></label>';}).join("")+'</div>'+
+      '<div class="row"><button class="btn ghost" id="copy" type="button">העתקת הפסקה</button><button class="btn" id="again" type="button">עוד פסקה</button><button class="btn ghost" id="home" type="button">חזרה לרשימה</button></div>';
     $("#res").textContent=text;
-    $("#home").onclick=function(){go("home");};
+    wireEnd();
     $("#copy").onclick=function(){var b=this;
-      try{navigator.clipboard.writeText(text).then(function(){b.textContent="הועתק";},function(){b.textContent="ההעתקה נחסמה, סמני את הטקסט ידנית";});}
-      catch(e){b.textContent="ההעתקה נחסמה, סמני את הטקסט ידנית";}};
+      try{navigator.clipboard.writeText(text).then(function(){b.textContent="הועתק";},function(){b.textContent="ההעתקה נחסמה. אפשר לסמן את הטקסט ולהעתיק ידנית.";});}
+      catch(e){b.textContent="ההעתקה נחסמה. אפשר לסמן את הטקסט ולהעתיק ידנית.";}};
   };
 }
 
+/* ---------- routing ---------- */
 var VIEWS={expand:expand,because:because,combine:combine,connectors:connectors,order:order,paragraph:paragraph};
 var current=location.hash.replace("#","")||"home";
 function render(){
   credited=false;
-  var d=DRILLS.filter(function(x){return x.id===current;})[0];
-  if(d)VIEWS[current](d);else home();
+  if(!me()||current==="start")start();
+  else if(current==="level")levelScreen();
+  else{var d=DRILLS.filter(function(x){return x.id===current;})[0];if(d)VIEWS[current](d);else home();}
   try{window.scrollTo(0,0);}catch(e){}
 }
 /* navigation works on its own; the address hash is only kept in step where the viewer allows it */
